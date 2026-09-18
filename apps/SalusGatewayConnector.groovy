@@ -268,17 +268,6 @@ void pollGatewayStatus() {
         
         // Attempt to reconnect on failure
         retryConnection()
-    }
-}
-
-/**
- * Fetch data from the Salus gateway API
- * 
- * In a real implementation, this would make HTTP calls to the gateway
- * Based on the salus_it600 Python library and Home Assistant implementation
- */
-<<<<<<< HEAD
-    log.debug "Processing gateway data: ${gatewayData}"
 /**
  * Fetch data from the Salus gateway API
  * Makes HTTP GET requests to the gateway to retrieve device status
@@ -441,7 +430,6 @@ Map<String, Object> fetchGatewayData() {
  */
 void processGatewayData(Map<String, Object> gatewayData) {
     log.debug "Processing gateway data: ${gatewayData}"
->>>>>>> b5b690e7ab06392f8734da60ac452df199dd56b7
     
     // Process climate devices (thermostats)
     if (gatewayData.climate) {
