@@ -1,120 +1,154 @@
 # TODO.md - Plan for Porting Salus HomeAssistant Integration to Hubitat
 
 ## Overview
-This plan outlines the steps to port the Salus iT600 HomeAssistant integration to Hubitat Elevation, following the specifications in `Port_to_Hubitat.md` and incorporating best practices observed from production Hubitat projects.
+This plan outlines the steps to port the Salus iT600 HomeAssistant integration to Hubitat Elevation.
 
 ## Supported Devices (Limited Scope)
 - Salus Universal Gateway (UG) 600
 - Salus Wireless Pump Relay Control (4 Zone) model AKL04P
 - Salus Wireless Thermostat model AWRT10RF or AS20WRF
 
-References to other Salus devices will be carried over as comments or stubs for future extension.
-
 ## Key Clarifications
 - Communication is local LAN only (no cloud fallback)
-- Initial scope: thermostat support for radiator/baseboard heating only (no cooling/fan modes)
-- Gateway communicates with thermostats and relay controller
-- Hubitat app reads status via gateway and sends commands to gateway
-- Virtual thermostat devices for each thermostat (accessible by other Hubitat apps like Thermostat Scheduler)
-- Relay zone controller shows status (on/off per zone), not direct control
-- All pump actions via commands to Salus Gateway
+- Initial scope: thermostat support for radiator/baseboard heating only
+- All pump control must go through Salus Gateway
+- Virtual thermostat devices must be accessible by Thermostat Scheduler
 
-## Current Status
+## Current Status - 2026-09-18
+
+### Completed ✓
 - [x] Project structure established: apps/, drivers/, libs/ directories created
-- [x] Port_to_Hubitat.md created and cleaned up
-- [x] Parent application framework: SalusGatewayConnector.groovy
-- [x] Child applications implemented:
-  - SalusThermostatController.groovy
-  - SalusSwitchController.groovy
-- [x] Device drivers implemented:
-  - SalusThermostat.groovy (Thermostat capability)
-  - SalusSwitch.groovy (Switch capability for status display)
-- [x] Common library created: SalusCommon.groovy
+- [x] Port_to_Hubitat.md resolved merge conflict
+- [x] Framework created with simulated data in SalusGatewayConnector.groovy
+- [x] Child applications: SalusThermostatController.groovy, SalusSwitchController.groovy
+- [x] Device drivers: SalusThermostat.groovy, SalusSwitch.groovy
+- [x] Common library: SalusCommon.groovy
 - [x] README.md updated with proper attribution
-- [IN PROGRESS] Implementing real HTTP communication with Salus gateway
-  - AES-256-CBC encryption with fixed IV
-  - HTTP POST to /deviceid/{command} endpoint
-  - Key derivation: MD5("Salus-{euid.lower()}")
-  - PKCS7 padding
+- [x] AES encryption support implemented (key derivation, fixed IV, PKCS5 padding)
+- [x] HTTP POST method structure defined for gateway communication
 
-## Phase 1: Project Setup and Exploration
-1. [x] Examine the existing HomeAssistant implementation
-   - [x] Reviewed salus-it600-client library
-   - [x] Understood AES encryption scheme
-   - [x] Identified API endpoints and data formats
-2. [x] Study example Hubitat projects
-3. [x] Set up Groovy project structure
+### In Progress
+- [ ] Integrate actual HTTP requests with Hubitat's async HTTP capabilities
+- [ ] Test encryption/decryption with real gateway
+- [ ] Complete command forwarding between apps and drivers
 
-## Phase 2: Implement Real HTTP Communication
-5. [IN PROGRESS] Create the parent application: Salus Gateway Connector
-   - [x] Implement definition() and preferences
-   - [x] Implement lifecycle methods
-   - [IN PROGRESS] Implement gateway connection logic
-   - [IN PROGRESS] Implement polling mechanism with HTTP calls
-   - [ ] Implement command execution methods (set_temperature, set_preset, etc.)
-   - [ ] Add robust error handling
+## Phase 1: Core Implementation
 
-## Phase 3: Complete Child Applications
-6. [ ] Create the child application template: Salus Device Controller
-   - [ ] Implement status update handling
-   - [ ] Implement command forwarding
+### 1. HTTP Communication Layer (SalusGatewayConnector.groovy)
+Implemented AES-256-CBC encryption methods:
+- `generateEncryptionKey(euid)` - derives 32-byte key from MD5
+- `getFixedIV()` - returns the fixed 16-byte IV from gateway spec
+- `encryptPayload(jsonPayload, euid)` - encrypts JSON for gateway
+- `fetchGatewayData()` - structured for HTTP POST to `/deviceid/read`
 
-## Phase 4: Device Driver Development
-7. [x] Salus Thermostat Driver - completed
-   - [x] Implement Thermostat capability
-   - [x] Support heatingSetpoint, temperature, presetMode
-   - [x] Compatibility with Thermostat Scheduler app
-- [ ] Salus Switch Driver - completed (status display only)
+**Pending:**
+- Replace simulated data with actual `httpPost` call
+- Add `httpPost` response handler method
+- Implement async callback processing
 
-## NOT IN SCOPE (per Port_to_Hubitat.md limitations)
-- Cover devices (open/close/stop) - use comments/stubs
-- Lock devices - use comments/stubs  
-- Binary sensors (other than thermostat-related) - use comments/stubs
-- Multi-temperature zone thermostats - not supported
+### 2. Command Execution Layer
+Implemented command mapping in `executeGatewayCommand()`:
+- `setTemperature` - sends heating setpoint to thermostat
+- `setPresetMode` - sends hold type (standby, permanent_hold, away)
+- `setThermostatLock` - locks/unlocks thermostat keypad
+- `turnOnSwitch` / `turnOffSwitch` - controls relay zones
 
-## Next Implementation Steps
+**NOT IMPLEMENTED** (per scope):
+- `set_cover_position`, `open_cover`, `close_cover` - cover devices not in scope
 
-### Step 1: Update SalusGatewayConnector.groovy with HTTP methods
-- Add AES-256-CBC encryption helper methods
-- Implement `connect()` method
-- Implement `poll_status()` method using HTTP POST
-- Implement command methods:
-  - `setTemperature(deviceId, temperature)` - for heating only
-  - `setPresetMode(deviceId, preset)`
-  - `lockThermostat(deviceId, locked)`
-- **NOT implementing**: `set_cover_position`, `open_cover`, `close_cover`
+### 3. Device Discovery & State Sync
+- Device discovery loop in `processGatewayData()`
+- Child app creation/deletion for thermostats and switches
+- State update methods for both device types
 
-### Step 2: Update child applications
-- Implement status update reception from parent
-- Handle device state changes
+## Phase 2: Hubitat Integration
 
-### Step 3: Testing
-- Verify HTTPS calls work in Hubitat environment
-- Test device discovery
-- Test thermostat control
+### Files Structure (Hubitat Package Manager compatible)
+```
+/hubitat_salus/
+├── apps/
+│   ├── SalusGatewayConnector.groovy    # Parent application
+│   ├── SalusThermostatController.groovy  # Child app
+│   └── SalusSwitchController.groovy       # Child app
+├── drivers/
+│   ├── SalusThermostat.groovy            # Driver
+│   └── SalusSwitch.groovy                  # Driver
+├── libs/
+│   └── SalusCommon.groovy                  # Shared library
+├── README.md
+├── Port_to_Hubitat.md
+└── TODO.md
+```
 
-## Technical Notes
+## Technical Reference - Salus Gateway API
 
-### Salus Gateway API (from salus-it600-client library)
-- Base URL: `http://{host}:80/deviceid/{command}`
-- Headers: `Content-Type: application/json`
-- Encryption: AES-256-CBC with:
-  - Fixed IV: 16 bytes of constants
-  - Key: MD5("Salus-{euid.lower()}") + 16 zero bytes
-  - Padding: PKCS7
-- Commands: "read" (for get data) and "write" (for send commands)
+### Encryption Scheme
+```
+Key derivation: MD5("Salus-{euid.lower()}") + 16 zero bytes
+IV: 16 bytes (fixed)
+Mode: AES-256-CBC
+Padding: PKCS5/PKCS7
+```
 
-### Hubitat HTTP Implementation
-- Use `asynchttp_get/post` for async calls
-- Use Java Cipher and SecretKeySpec for AES
-- Use MessageDigest for MD5
+### API Endpoints
+```
+Base URL: http://{host}:80/deviceid/{command}
+Methods: POST only
+Headers: Content-Type: application/json
+Body: Encrypted JSON bytes (not base64, raw bytes)
+```
 
-### Device Endpoints
-- `read` + `requestAttr: "readall"` - get all devices
-- `read` + `requestAttr: "deviceid"` - get detailed device info by ID
+### Commands
+| Command | Method | Description |
+|---------|--------|-------------|
+| read | `{"requestAttr": "readall"}` | Get all device status |
+| read | `{"requestAttr": "deviceid", "id": [...]}` | Get specific devices |
+| write | `{"requestAttr": "write", "id": [{"data": {...}}, ...]}` | Send commands |
+
+## Next Steps
+
+1. **Hubitat HTTP Integration**: Replace simulated data with actual HTTP POST
+   - Use `asynchttpPost()` in Groovy
+   - Implement response handler method
+   - Parse decrypted JSON response
+
+2. **Testing**
+   - Validate encryption matches gateway expectations
+   - Test device discovery with real hardware
+   - Verify thermostat control via Hubitat UI
+
+3. **Remaining TODOs** (see below)
+
+## Scope Exclusions (per Port_to_Hubitat.md)
+These device types are kept as stubs/comments:
+- Cover/Garage Door devices
+- Contact/binary sensors (other than thermostat-related)
+- Temperature/Humidity sensors
+- Lock devices
+
+---
+
+## TODO - Remaining Tasks
+
+### High Priority
+1. Implement actual HTTP POST in fetchGatewayData()
+2. Add response handler method for async HTTP
+3. Test with real Salus gateway
+
+### Medium Priority
+4. Implement child app -> parent command forwarding
+5. Add device capability attributes
+6. Add proper error handling for network timeouts
+
+### Low Priority (Documentation/Polish)
+7. Add inline code documentation
+8. Prepare for Hubitat Package Manager submission
 
 ## Rollback Plan
-If implementation fails, revert to simulated data and document API requirements for manual implementation.
+If HTTP integration fails, keep simulated data with clear "NOT PRODUCTION" warnings and document the expected gateway API structure for future manual implementation.
 
-## Approval
-Awaiting approval to proceed with HTTP implementation.
+## Files Modified This Session
+- TODO.md - Updated with status and next steps
+- README.md - Added attribution section
+- apps/SalusGatewayConnector.groovy - Added AES encryption methods and HTTP structure
+- Port_to_Hubitat.md - Resolved merge conflict
