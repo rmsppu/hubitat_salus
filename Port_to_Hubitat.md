@@ -22,7 +22,11 @@ References to other Salus devices from the original software should be carried o
 This project lives at:
 	https://github.com/rmsppu/hubitat_salus.git
 
-You must make new branche[s] as needed to separate the original code from the Hubitat version.
+You must make new branch[s] as needed to separate the original code from the Hubitat version.
+
+There must not be any pull requests, commits, or pushes to any other repository.
+
+If source code from another (3rd party) repo will be used in this project, it should be copied into rmsppu/hubitat_salus, with detailed attribution (author name, repo name, etc).
 
 ## Persistent Context
 ### Overview
@@ -38,7 +42,7 @@ This file is used to maintain context, particularly across multiple sessions or 
 During a session, periodically and frequently update the file "Status.md" with information about the current status of the chat, code, and debugging to serve as long-term persistent memory of your progress on the project. This file contains details to supplement Overview.md as needed, and should never be removed. The Status.md file should contain both high-level information and background, but not implementation details for specific tasks (which will be kept in TODO.md, which is considered ephemeral). The Status.md file can be used to maintain a list of future tasks that are not part of the immediate work. These may be tasks mentioned during the chat, sections of code where you observe a need for future improvement, etc.
 
 ## Device Driver
-See the Home Assistant project in: /home/bergman/Salus_for_Hubitat/home-assistant-salus as an example of the python device driver needed to talk to the Salus UGE600 on the local LAN. Note that this MUST be reimplemented in Groovy in order to run on the Hubitat platform.
+See the Home Assistant project in: /home/bergman/Salus_for_Hubitat/salus-it600-client as working example of the python device driver needed to talk to the Salus UGE600 on the local LAN. Note that this MUST be reimplemented in Groovy in order to run on the Hubitat platform.
 
 ### TODO
 The file "TODO.md" contains a specific list of goals to meet the current task, the status of that task, and a multi-step plan for meeting the task, including testing and verification. You can maintain the TODO.md file, changing it as needed during a task. The TODO.md file should be narrow in scope, referring to the task[s] that are under active work.

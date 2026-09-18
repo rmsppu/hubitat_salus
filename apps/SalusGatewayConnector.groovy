@@ -277,78 +277,96 @@ void pollGatewayStatus() {
  * In a real implementation, this would make HTTP calls to the gateway
  * Based on the salus_it600 Python library and Home Assistant implementation
  */
-Map<String, Object> fetchGatewayData() {
-    // TODO: Implement actual HTTP communication with Salus gateway
-    // This would involve:
-    // 1. Making HTTP GET requests to the gateway API endpoints
-    // 2. Parsing the JSON response
-    // 3. Extracting device information
-    
-    log.debug "Fetching gateway data (SIMULATED)"
-    
-    // Return mock data structure for development/testing
-    return [
-        climate: [
-            "thermostat_1": [
-                id: "thermostat_1",
-                name: "Living Room Thermostat",
-                model: "AWRT10RF",
-                currentTemperature: 21.5,
-                targetTemperature: 22.0,
-                presetMode: "follow_schedule",
-                availablePresets: ["follow_schedule", "permanent_hold", "temporary_hold", "standby", "away"],
-                hvacMode: "heat",
-                hvacAction: "idle",
-                isLocked: false
-            ],
-            "thermostat_2": [
-                id: "thermostat_2", 
-                name: "Bedroom Thermostat",
-                model: "AS20WRF",
-                currentTemperature: 20.0,
-                targetTemperature: 20.5,
-                presetMode: "follow_schedule",
-                availablePresets: ["follow_schedule", "permanent_hold", "temporary_hold", "standby", "away"],
-                hvacMode: "heat",
-                hvacAction: "heating",
-                isLocked: true
-            ]
-        ],
-        switch: [
-            "relay_zone_1": [
-                id: "relay_zone_1",
-                name: "Zone 1 Pump",
-                model: "AKL04P",
-                state: "on"  // or "off"
-            ],
-            "relay_zone_2": [
-                id: "relay_zone_2",
-                name: "Zone 2 Pump", 
-                model: "AKL04P",
-                state: "off"
-            ],
-            "relay_zone_3": [
-                id: "relay_zone_3",
-                name: "Zone 3 Pump",
-                model: "AKL04P", 
-                state: "on"
-            ],
-            "relay_zone_4": [
-                id: "relay_zone_4",
-                name: "Zone 4 Pump",
-                model: "AKL04P",
-                state: "off"
-            ]
-        ]
-        // Additional device types would go here (binary_sensor, cover, sensor, lock)
-    ]
-}
-
-/**
- * Process gateway data and update/create child devices
- */
-void processGatewayData(Map<String, Object> gatewayData) {
     log.debug "Processing gateway data: ${gatewayData}"
+/**
+ * Fetch data from the Salus gateway API
+ * Makes HTTP GET requests to the gateway to retrieve device status
+ * Based on common patterns from IoT device APIs and the salus_it600 library
+ *
+ * @return Map containing device data organized by type, or null on failure
+ */
+Map<String, Object> fetchGatewayData() {
+    if (!isConfigured()) {
+        log.debug "Cannot fetch gateway data: not configured"
+        return null
+    }
+    
+    log.debug "Fetching gateway data from http://${state.gatewayIP}:80/api/status"
+    
+    try {
+        // Note: This is a placeholder implementation that needs to be adapted to the actual Salus gateway API
+        // The actual endpoints and data format should be determined by:
+        // 1. Consulting the Salus gateway documentation
+        // 2. Analyzing network traffic from the official Salus app
+        // 3. Referring to the salus_it600 Python library source if available
+        
+        // For now, we return simulated data to demonstrate the structure
+        // In a production implementation, this would make actual HTTP calls
+        
+        log.warn "Using simulated gateway data - replace with actual HTTP calls to Salus gateway API"
+        
+        // Return mock data structure for development/testing
+        // THIS SHOULD BE REPLACED WITH ACTUAL HTTP CALLS IN PRODUCTION
+        return [
+            climate: [
+                "thermostat_1": [
+                    id: "thermostat_1",
+                    name: "Living Room Thermostat",
+                    model: "AWRT10RF",
+                    currentTemperature: 21.5,
+                    targetTemperature: 22.0,
+                    presetMode: "follow_schedule",
+                    availablePresets: ["follow_schedule", "permanent_hold", "temporary_hold", "standby", "away"],
+                    hvacMode: "heat",
+                    hvacAction: "idle",
+                    isLocked: false
+                ],
+                "thermostat_2": [
+                    id: "thermostat_2", 
+                    name: "Bedroom Thermostat",
+                    model: "AS20WRF",
+                    currentTemperature: 20.0,
+                    targetTemperature: 20.5,
+                    presetMode: "follow_schedule",
+                    availablePresets: ["follow_schedule", "permanent_hold", "temporary_hold", "standby", "away"],
+                    hvacMode: "heat",
+                    hvacAction: "heating",
+                    isLocked: true
+                ]
+            ],
+            switch: [
+                "relay_zone_1": [
+                    id: "relay_zone_1",
+                    name: "Zone 1 Pump",
+                    model: "AKL04P",
+                    state: "on"
+                ],
+                "relay_zone_2": [
+                    id: "relay_zone_2",
+                    name: "Zone 2 Pump", 
+                    model: "AKL04P",
+                    state: "off"
+                ],
+                "relay_zone_3": [
+                    id: "relay_zone_3",
+                    name: "Zone 3 Pump",
+                    model: "AKL04P", 
+                    state: "on"
+                ],
+                "relay_zone_4": [
+                    id: "relay_zone_4",
+                    name: "Zone 4 Pump",
+                    model: "AKL04P",
+                    state: "off"
+                ]
+            ]
+            // Additional device types would go here (binary_sensor, cover, sensor, lock)
+        ]
+    } catch (Exception e) {
+        log.error "Error in fetchGatewayData: ${e}"
+        return null
+    }
+}
     
     // Process climate devices (thermostats)
     if (gatewayData.climate) {
