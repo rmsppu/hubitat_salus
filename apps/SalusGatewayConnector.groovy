@@ -277,6 +277,7 @@ void pollGatewayStatus() {
  * In a real implementation, this would make HTTP calls to the gateway
  * Based on the salus_it600 Python library and Home Assistant implementation
  */
+<<<<<<< HEAD
     log.debug "Processing gateway data: ${gatewayData}"
 /**
  * Fetch data from the Salus gateway API
@@ -367,6 +368,80 @@ Map<String, Object> fetchGatewayData() {
         return null
     }
 }
+=======
+Map<String, Object> fetchGatewayData() {
+    // TODO: Implement actual HTTP communication with Salus gateway
+    // This would involve:
+    // 1. Making HTTP GET requests to the gateway API endpoints
+    // 2. Parsing the JSON response
+    // 3. Extracting device information
+    
+    log.debug "Fetching gateway data (SIMULATED)"
+    
+    // Return mock data structure for development/testing
+    return [
+        climate: [
+            "thermostat_1": [
+                id: "thermostat_1",
+                name: "Living Room Thermostat",
+                model: "AWRT10RF",
+                currentTemperature: 21.5,
+                targetTemperature: 22.0,
+                presetMode: "follow_schedule",
+                availablePresets: ["follow_schedule", "permanent_hold", "temporary_hold", "standby", "away"],
+                hvacMode: "heat",
+                hvacAction: "idle",
+                isLocked: false
+            ],
+            "thermostat_2": [
+                id: "thermostat_2", 
+                name: "Bedroom Thermostat",
+                model: "AS20WRF",
+                currentTemperature: 20.0,
+                targetTemperature: 20.5,
+                presetMode: "follow_schedule",
+                availablePresets: ["follow_schedule", "permanent_hold", "temporary_hold", "standby", "away"],
+                hvacMode: "heat",
+                hvacAction: "heating",
+                isLocked: true
+            ]
+        ],
+        switch: [
+            "relay_zone_1": [
+                id: "relay_zone_1",
+                name: "Zone 1 Pump",
+                model: "AKL04P",
+                state: "on"  // or "off"
+            ],
+            "relay_zone_2": [
+                id: "relay_zone_2",
+                name: "Zone 2 Pump", 
+                model: "AKL04P",
+                state: "off"
+            ],
+            "relay_zone_3": [
+                id: "relay_zone_3",
+                name: "Zone 3 Pump",
+                model: "AKL04P", 
+                state: "on"
+            ],
+            "relay_zone_4": [
+                id: "relay_zone_4",
+                name: "Zone 4 Pump",
+                model: "AKL04P",
+                state: "off"
+            ]
+        ]
+        // Additional device types would go here (binary_sensor, cover, sensor, lock)
+    ]
+}
+
+/**
+ * Process gateway data and update/create child devices
+ */
+void processGatewayData(Map<String, Object> gatewayData) {
+    log.debug "Processing gateway data: ${gatewayData}"
+>>>>>>> b5b690e7ab06392f8734da60ac452df199dd56b7
     
     // Process climate devices (thermostats)
     if (gatewayData.climate) {

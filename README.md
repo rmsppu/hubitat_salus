@@ -19,8 +19,15 @@ This integration is based on and incorporates code patterns from several open-so
 
 ### Hubitat Integration Patterns
 - [CoCoHue - Hue Bridge Integration for Hubitat](https://github.com/HubitatCommunity/CoCoHue) - Parent-child architecture, event handling, and caching patterns
+<<<<<<< HEAD
+- [BlubButtons Hubitat Integration Example] - Child application and device creation patterns
+- [Kasa Hubitat Integration Example] - Library usage for shared functionality and local-only communication patterns
+
+> *Note: The BlubButtons and Kasa Hubitat Integration examples were provided in the Example_Hubitat_Projects directory of the development environment.
+=======
 - [BlubButtons Hubitat Integration] - Child application and device creation patterns
 - [Kasa Hubitat Integration] - Library usage for shared functionality and local-only communication patterns
+>>>>>>> b5b690e7ab06392f8734da60ac452df199dd56b7
 
 ### Documentation
 - [Hubitat Developer Documentation](https://docs2.hubitat.com/)
