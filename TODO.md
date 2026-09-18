@@ -19,96 +19,109 @@ References to other Salus devices will be carried over as comments or stubs for 
 - Relay zone controller shows status (on/off per zone), not direct control
 - All pump actions via commands to Salus Gateway
 
+## Current Status (as of 2026-09-18)
+- Project structure established: apps/, drivers/, libs/ directories created
+- Parent application implemented: SalusGatewayConnector.groovy (basic framework with simulated data)
+- Child applications implemented:
+  - SalusThermostatController.groovy
+  - SalusSwitchController.groovy
+- Device drivers implemented:
+  - SalusThermostat.groovy (Thermostat capability for radiator heating)
+  - SalusSwitch.groovy (Switch capability for status display only)
+- Common library created: SalusCommon.groovy
+- README.md updated with proper attribution to source projects
+- Initial exploration of Home Assistant implementation completed
+
 ## Phase 1: Project Setup and Exploration
-1. [ ] Examine the existing HomeAssistant implementation to understand data structures and communication patterns
-   - Review `custom_components/salus/` directory
-   - Understand the `salus_it600` library usage (gateway communication, device models)
-   - Identify the API endpoints and data formats used by the Salus gateway
-2. [ ] Research Hubitat development best practices from the provided documentation links
-3. [ ] Study the example Hubitat projects to understand patterns:
-   - CoCoHue: Parent-child structure, event streaming, caching, V1/V2 API handling
-   - BlubButtons: App creating child devices, passing data through deviceData
-   - Kasa: Library usage for shared code, cloud/local communication fallback (note: we only need local)
-4. [ ] Set up the Groovy project structure within the hubitat_salus directory
-   - Create `apps/` directory for parent and child applications
-   - Create `drivers/` directory for device drivers
+1. [x] Examine the existing HomeAssistant implementation to understand data structures and communication patterns
+   - [x] Reviewed `custom_components/salus/` directory
+   - [x] Understood the `salus_it600` library usage (gateway communication, device models)
+   - [ ] Identify the API endpoints and data formats used by the Salus gateway (NEEDS INVESTIGATION)
+2. [x] Research Hubitat development best practices from the provided documentation links
+3. [x] Study the example Hubitat projects to understand patterns:
+   - [x] CoCoHue: Parent-child structure, event streaming, caching, V1/V2 API handling
+   - [x] BlubButtons: App creating child devices, passing data through deviceData
+   - [x] Kasa: Library usage for shared code, cloud/local communication fallback (note: we only need local)
+4. [x] Set up the Groovy project structure within the hubitat_salus directory
+   - [x] Create `apps/` directory for parent and child applications
+   - [x] Create `drivers/` directory for device drivers
 
 ## Phase 2: Parent Application Development
 5. [ ] Create the parent application: Salus Gateway Connector
-   - Implement `definition()` with appropriate metadata (name, namespace, etc.)
-   - Set menu: "Integrations" (following CoCoHue pattern)
-   - Add preferences for gateway configuration (IP address, EUID token, polling interval)
-   - Implement `installed()` and `updated()` lifecycle methods
-   - Implement gateway connection logic (adapt from `salus_it600.gateway.IT600Gateway`)
-   - Implement polling mechanism to fetch device status from the gateway (local LAN only)
-   - Implement device discovery: iterate through gateway devices (climate, binary_sensor, switch, cover, sensor, lock)
-   - For each discovered device, create a child application instance with unique device ID
-   - For each removed device, remove the corresponding child application instance
-   - Implement methods for child applications to send commands to the gateway
-   - Implement error handling and reconnection logic
-   - Consider implementing event streaming if the Salus gateway supports it (like CoCoHue)
+   - [x] Implement `definition()` with appropriate metadata (name, namespace, etc.)
+   - [x] Set menu: "Integrations" (following CoCoHue pattern)
+   - [x] Add preferences for gateway configuration (IP address, EUID token, polling interval)
+   - [x] Implement `installed()` and `updated()` lifecycle methods
+   - [ ] Implement gateway connection logic (adapt from `salus_it600.gateway.IT600Gateway`)
+   - [ ] Implement polling mechanism to fetch device status from the gateway (local LAN only)
+   - [ ] Implement device discovery: iterate through gateway devices (climate, binary_sensor, switch, cover, sensor, lock)
+   - [ ] For each discovered device, create a child application instance with unique device ID
+   - [ ] For each removed device, remove the corresponding child application instance
+   - [ ] Implement methods for child applications to send commands to the gateway
+   - [ ] Implement error handling and reconnection logic
+   - [ ] Consider implementing event streaming if the Salus gateway supports it (like CoCoHue)
 
 ## Phase 3: Child Application Development
 6. [ ] Create the child application template: Salus Device Controller
-   - Implement `definition()` for a generic child application
-   - Add preferences specific to the device type (if needed)
-   - Implement lifecycle methods (`installed()`, `updated()`)
-   - On installation, create one or more Hubitat devices using the appropriate device driver
-   - Pass device-specific information (gateway device ID, device type) to the created device via device data
-   - Store reference to parent application device network ID for communication
-   - Implement methods to receive command updates from the parent application
-   - Implement methods to send status updates to the parent application (if needed)
-   - Handle device removal when the parent application signals device disappearance
+   - [x] Implement `definition()` for a generic child application
+   - [ ] Add preferences specific to the device type (if needed)
+   - [x] Implement lifecycle methods (`installed()`, `updated()`)
+   - [x] On installation, create one or more Hubitat devices using the appropriate device driver
+   - [x] Pass device-specific information (gateway device ID, device type) to the created device via device data
+   - [x] Store reference to parent application device network ID for communication
+   - [x] Implement methods to receive command updates from the parent application
+   - [ ] Implement methods to send status updates to the parent application (if needed)
+   - [x] Handle device removal when the parent application signals device disappearance
 
 ## Phase 4: Device Driver Development
 7. [ ] Create device drivers for supported device types, following patterns from examples:
-   - **Salus Thermostat Driver** (for AWRT10RF/AS20WRF)
-     - Implement Thermostat capability
-     - Support attributes: temperature, heatingSetpoint (coolingSetpoint and thermostatFanMode not needed for radiator heating)
-     - Support commands: setTemperature, setHeatingSetpoint (setCoolingSetpoint and setThermostatMode not needed)
-     - Map commands to gateway API calls via parent application
-     - Include detailed logging and error handling
-     - Ensure compatibility with Hubitat Thermostat Scheduler app
-   - **Salus Switch Driver** (for AKL04P relay zones - status only)
-     - Implement Switch capability (for each of the 4 zones)
-     - Support attributes: switch (read-only/status only)
-     - Do NOT support commands: on, off (control only via gateway)
-     - Map status updates from gateway API calls via parent application
-     - Consider implementing separate child devices for each zone (like CoCoHue groups) for status display
-   - **Salus Contact Sensor Driver** (for binary sensors like window/door)
-     - Implement Contact Sensor capability
-     - Support attribute: contact
-     - Update status from gateway polling via parent application
-   - **Salus Garage Door Driver** (for cover devices if applicable)
-     - Implement Garage Door capability
-     - Support attributes: door
-     - Support commands: open, close, stop
-   - **Salus Sensor Driver** (for temperature/humidity sensors)
-     - Implement Relative Humidity Measurement and Temperature Measurement capabilities
-     - Support attributes: humidity, temperature
-   - **Salus Lock Driver** (for lock devices if applicable)
-     - Implement Lock capability
-     - Support attributes: lock
-     - Support commands: lock, unlock
+   - [x] **Salus Thermostat Driver** (for AWRT10RF/AS20WRF)
+     - [x] Implement Thermostat capability
+     - [x] Support attributes: temperature, heatingSetpoint (coolingSetpoint and thermostatFanMode not needed for radiator heating)
+     - [x] Support commands: setTemperature, setHeatingSetpoint (setCoolingSetpoint and setThermostatMode not needed)
+     - [ ] Map commands to gateway API calls via parent application
+     - [x] Include detailed logging and error handling
+     - [x] Ensure compatibility with Hubitat Thermostat Scheduler app
+   - [x] **Salus Switch Driver** (for AKL04P relay zones - status only)
+     - [x] Implement Switch capability (for each of the 4 zones)
+     - [x] Support attributes: switch (read-only/status only)
+     - [x] Do NOT support commands: on, off (control only via gateway)
+     - [ ] Map status updates from gateway API calls via parent application
+     - [ ] Consider implementing separate child devices for each zone (like CoCoHue groups) for status display
+   - [ ] **Salus Contact Sensor Driver** (for binary sensors like window/door)
+     - [ ] Implement Contact Sensor capability
+     - [ ] Support attribute: contact
+     - [ ] Update status from gateway polling via parent application
+   - [ ] **Salus Garage Door Driver** (for cover devices if applicable)
+     - [ ] Implement Garage Door capability
+     - [ ] Support attributes: door
+     - [ ] Support commands: open, close, stop
+   - [ ] **Salus Sensor Driver** (for temperature/humidity sensors)
+     - [ ] Implement Relative Humidity Measurement and Temperature Measurement capabilities
+     - [ ] Support attributes: humidity, temperature
+   - [ ] **Salus Lock Driver** (for lock devices if applicable)
+     - [ ] Implement Lock capability
+     - [ ] Support attributes: lock
+     - [ ] Support commands: lock, unlock
 
 ## Phase 5: Communication and Data Flow
 8. [ ] Implement communication between parent and child applications
-   - Parent application exposes methods for child applications to send commands (e.g., `sendCommandToDevice(deviceId, command, params)`)
-   - Child applications store parent device network ID and call parent methods to execute actions
-   - Parent application polls gateway for status updates (local LAN only, or uses event streaming if available)
-   - Parent application pushes status updates to child applications (via device events or state changes)
-   - Child applications update their created Hubitat devices with the latest status
-   - Implement caching mechanisms to reduce gateway API calls (like CoCoHue's bridge cache)
+   - [ ] Parent application exposes methods for child applications to send commands (e.g., `sendCommandToDevice(deviceId, command, params)`)
+   - [ ] Child applications store parent device network ID and call parent methods to execute actions
+   - [ ] Parent application polls gateway for status updates (local LAN only, or uses event streaming if available)
+   - [ ] Parent application pushes status updates to child applications (via device events or state changes)
+   - [ ] Child applications update their created Hubitat devices with the latest status
+   - [ ] Implement caching mechanisms to reduce gateway API calls (like CoCoHue's bridge cache)
 
 9. [ ] Implement state synchronization
-   - When parent application receives updated device status from gateway, notify relevant child applications
-   - Child applications update their Hubitat device attributes accordingly
-   - When Hubitat device receives a command (via device driver), child application forwards command to parent application
-   - Parent application translates command to gateway API call and executes it
-   - After command execution, parent application requests status update to reflect change
+   - [ ] When parent application receives updated device status from gateway, notify relevant child applications
+   - [ ] Child applications update their Hubitat device attributes accordingly
+   - [ ] When Hubitat device receives a command (via device driver), child application forwards command to parent application
+   - [ ] Parent application translates command to gateway API call and executes it
+   - [ ] After command execution, parent application requests status update to reflect change
 
 ## Phase 6: Advanced Features (Following Examples)
-10. [ ] Consider implementing library classes for shared functionality (like Kasa's kasaCommon and kasaCommunications)
+10. [x] Consider implementing library classes for shared functionality (like Kasa's kasaCommon and kasaCommunications)
 11. [ ] Implement proper logging with different levels (debug, info, warn, error)
 12. [ ] Add support for automatic debug timeout (like the examples)
 13. [ ] Implement robust error handling and reconnection logic
@@ -117,21 +130,62 @@ References to other Salus devices will be carried over as comments or stubs for 
 
 ## Phase 7: Testing and Validation
 16. [ ] Create test scenarios for each supported device type
-    - Thermostat: temperature reading, setpoint changes (heating only)
-    - Relay switch: status display for each zone (on/off)
-    - Binary sensors: open/closed state detection
-    - Cover devices: open/close/stop (if applicable)
-    - Sensor devices: temperature/humidity readings
-    - Lock devices: lock/unlock (if applicable)
+    - [ ] Thermostat: temperature reading, setpoint changes (heating only)
+    - [ ] Relay switch: status display for each zone (on/off)
+    - [ ] Binary sensors: open/closed state detection
+    - [ ] Cover devices: open/close/stop (if applicable)
+    - [ ] Sensor devices: temperature/humidity readings
+    - [ ] Lock devices: lock/unlock (if applicable)
 17. [ ] Implement logging and diagnostics for troubleshooting
 18. [ ] Validate compliance with Hubitat best practices from the documentation links
 19. [ ] Ensure proper error handling and edge cases (e.g., gateway unreachable, invalid responses)
 
 ## Phase 8: Documentation and Finalization
-20. [ ] Update README.md with Hubitat-specific installation and configuration instructions
+20. [x] Update README.md with Hubitat-specific installation and configuration instructions
 21. [ ] Create inline documentation in Groovy code following self-documenting principles
 22. [ ] Review and refine code for performance and reliability
 23. [ ] Prepare for Hubitat Package Manager submission (if desired)
+
+## Next Steps
+To continue implementation, the following tasks need to be completed:
+
+1. **Investigate Salus Gateway API**:
+   - Determine the actual HTTP endpoints for the Salus UG600 gateway
+   - Understand the authentication mechanism (EUID token usage)
+   - Identify the data format for device status and control commands
+   - Resources to consult:
+     - Salus gateway documentation (if available)
+     - Network traffic analysis from official Salus app
+     - The salus_it600 Python library source code (if accessible)
+     - Home Assistant Salus implementation (in home-assistant-salus directory)
+
+2. **Implement Real HTTP Communication**:
+   - Replace the simulated data in `fetchGatewayData()` with actual HTTP calls
+   - Implement proper error handling for network issues
+   - Add support for HTTPS if required by the gateway
+   - Implement request timeout and retry logic
+
+3. **Complete Parent Application**:
+   - Implement actual device discovery logic
+   - Implement child application creation/deletion based on discovered devices
+   - Implement command execution methods that translate to gateway API calls
+   - Add proper state synchronization between parent and child applications
+
+4. **Complete Child Applications**:
+   - Implement status update handling from parent application
+   - Implement command forwarding to parent application
+   - Enhance device state management
+
+5. **Complete Device Drivers**:
+   - Implement actual command handling that communicates with parent application
+   - Enhance state update mechanisms
+   - Add support for additional device types as needed
+
+6. **Testing and Validation**:
+   - Set up test environment with a real or simulated Salus gateway
+   - Create test scenarios for each device type
+   - Implement logging and diagnostics
+   - Validate compliance with Hubitat best practices
 
 ## Notes Based on Examples
 - Follow the parent-child pattern seen in CoCoHue and BlubButtons where the parent app creates child devices
@@ -143,9 +197,10 @@ References to other Salus devices will be carried over as comments or stubs for 
 - Consider implementing caching to reduce API calls to the gateway
 - Follow Hubitat naming conventions and structure for applications and drivers
 
-## Approval Required
-Please review this plan and provide approval before proceeding with implementation. Once approved, I will begin implementing the parent application.
+## Approval Status
+Parent application framework has been created and basic functionality implemented. 
+Next phase requires investigation of the actual Salus gateway API to implement real HTTP communication.
 
 --- 
 
-End of plan. Awaiting your approval to proceed.
+End of current status update. Next steps require API investigation and HTTP implementation.
