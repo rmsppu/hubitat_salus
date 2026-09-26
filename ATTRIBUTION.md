@@ -1,7 +1,8 @@
-Salus iT600 Home Assistant integration
+Salus iT600 Hubitat Integration
 
-This project is a maintained fork/successor of:
+This project is a maintained fork/successor of the Salus iT600 Home Assistant integration, based on:
 
+- hppts://github.com/jordi-14/salus-it600-client
 - https://github.com/konradb3/homeassistant_salus
 - https://github.com/epoplavskis/homeassistant_salus
 
