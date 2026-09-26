@@ -7,6 +7,10 @@
  *  This child app is created and managed by the SalusGatewayConnector parent app.
  */
 
+/* Id: $Id$ */
+/* Date: $Date$ */
+/* Commit: $NextCommitNum$ */
+
 import groovy.transform.Field
 import com.hubitat.app.DeviceWrapper
 

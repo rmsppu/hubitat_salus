@@ -1,3 +1,7 @@
+/* Id: $Id$ */
+/* Date: $Date$ */
+/* Commit: $NextCommitNum$ */
+
 Salus iT600 Hubitat Integration
 
 This project is a maintained fork/successor of the Salus iT600 Home Assistant integration, based on:

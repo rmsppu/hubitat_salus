@@ -1,3 +1,7 @@
+/* Id: $Id$ */
+/* Date: $Date$ */
+/* Commit: $NextCommitNum$ */
+
 # TODO.md - Plan for Porting Salus HomeAssistant Integration to Hubitat
 
 ## Overview

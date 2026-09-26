@@ -7,6 +7,10 @@
  *  This device is created and managed by the SalusThermostatController child app.
  */
 
+/* Id: $Id$ */
+/* Date: $Date$ */
+/* Commit: $NextCommitNum$ */
+
 import groovy.transform.Field
 
 // Supported thermostat capabilities and attributes

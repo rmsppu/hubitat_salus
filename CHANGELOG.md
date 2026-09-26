@@ -1,3 +1,7 @@
+/* Id: $Id$ */
+/* Date: $Date$ */
+/* Commit: $NextCommitNum$ */
+
 # Changelog
 
 All notable changes to the Salus Hubitat Integration project will be documented in this file.

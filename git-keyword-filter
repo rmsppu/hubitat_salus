@@ -1,0 +1,15 @@
+#!/bin/bash 
+
+# Define keywords and their replacements
+id=$(git rev-parse --short HEAD)
+date=$(git log -1 --format=%cd --date=format:'%Y-%m-%d %H:%M:%S')
+author=$(git log -1 --format=%an)
+revision=$(git log -1 --format=%h)
+nextcommitnum=$(( $(git rev-list --count $(git rev-parse --abbrev-ref HEAD)) + 1))
+
+# Perform keyword substitution
+sed -e "s/\\\$Id\\\$/${id}/g" \
+    -e "s/\\\$Date\\\$/${date}/g" \
+    -e "s/\\\$Author\\\$/${author}/g" \
+    -e "s/\\\$Revision\\\$/${revision}/g" \
+    -e "s/\\\$NextCommitNum\\\$/${nextcommitnum}/g" "$1"

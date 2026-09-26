@@ -1,3 +1,7 @@
+/* Id: $Id$ */
+/* Date: $Date$ */
+/* Commit: $NextCommitNum$ */
+
 # Overview the hubitat_salus project
 
 ## Intent

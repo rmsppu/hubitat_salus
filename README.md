@@ -1,3 +1,7 @@
+/* Id: $Id$ */
+/* Date: $Date$ */
+/* Commit: $NextCommitNum$ */
+
 # Salus Hubitat Integration
 
 This project ports the Salus iT600 Home Assistant integration to Hubitat Elevation.

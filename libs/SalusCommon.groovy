@@ -12,6 +12,11 @@
  *  - Kasa Hubitat Integration
  */
 
+/* Id: $Id$ */
+/* Date: $Date$ */
+/* Commit: $NextCommitNum$ */
+
+
 import groovy.transform.Field
 
 /**

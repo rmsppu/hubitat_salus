@@ -9,6 +9,10 @@
  *  - CoCoHue - Hue Bridge Integration
  */
 
+/* Id: $Id$ */
+/* Date: $Date$ */
+/* Commit: $NextCommitNum$ */
+
 import groovy.transform.Field
 import com.hubitat.app.DeviceWrapper
 import java.security.MessageDigest
