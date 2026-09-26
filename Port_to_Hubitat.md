@@ -76,10 +76,13 @@ Be self-documenting. Source code must include comments for build an test steps.
 
 
 ## Revision Control Commit Messages
-All github commit messages must start with the name of the AI model and agent, as in: 
+All github commit messages MUST start with the name of the IDE, AI model, and agent, with version numbers. For example:
+
     git commit -m "Kilo -- MiniMax 2.5: this is the commit message" 
 
-Where the content of the "commit message" is a brief summary of the changes since the previous commit. Commit messages must be formatted to be both human- and machine-readable. The use of semmantic information, such as markdown tags, is encouraged.
+(the model "MinMax" and version "2.5" MUST be replaced by the AI model and version in use at the moment of the commit).
+
+Where the content of the "commit message" is a brief summary of the changes since the previous commit. Commit messages must be formatted to be both human- and machine-readable. The use of semmantic information, such as markdown tags, is strongly encouraged.
 
 # Actions
 You may run commands to compile code (clang, gcc, make), debug code (strace, gprof, valgrind, etc), run the executable for testing and check the structure of the project, including reading and altering files with tools like grep, sed, perl ONLY when all files that are being read or written to are in the directory

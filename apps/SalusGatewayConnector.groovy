@@ -198,8 +198,8 @@ void setGatewayStatus(String status) {
 }
 
 void scheduleStatusPolling() {
-    if (state.gollInterval > 0) {
-        schedule("*/${state.pollInterval} * * * ? * * *", "pollGatewayStatus")
+    if (state.pollInterval > 0) {
+        schedule("0 */${state.pollInterval} * * * ?", "pollGatewayStatus")
     }
 }
 
@@ -359,14 +359,14 @@ Boolean executeGatewayCommand(String deviceId, String command, Object params) {
             // Convert from user's preferred unit to Celsius
             double tempC = convertFromPreferredUnit(params instanceof Map ? params.value : params)
             int tempX100 = Math.round(tempC * 100)
-            requestBody = "{\"requestAttr\":\"write\",\"id\":[{\"data\":{\"UniID\":\"${deviceId}\"},\"sIT600TH\":{\"SetHeatingSetpoint_x100\":${tempX100}}}]}""
+            requestBody = "{\"requestAttr\":\"write\",\"id\":[{\"data\":{\"UniID\":\"${deviceId}\"},\"sIT600TH\":{\"SetHeatingSetpoint_x100\":${tempX100}}}]}"
             break
             
         case "setPresetMode":
             def preset = (params instanceof Map ? params.value : params)?.toString()?.toLowerCase()
             def holdType = [follow_schedule:"STANDBY", permanent_hold:"PERMANENT_HOLD", 
                            standby:"OFF", away:"AWAY"].get(preset, "STANDBY")
-            requestBody = "{\"requestAttr\":\"write\",\"id\":[{\"data\":{\"UniID\":\"${deviceId}\"},\"sIT600TH\":{\"SetHoldType\":${holdType}}}]}""
+            requestBody = "{\"requestAttr\":\"write\",\"id\":[{\"data\":{\"UniID\":\"${deviceId}\"},\"sIT600TH\":{\"SetHoldType\":${holdType}}}]}"
             break
             
         case "setThermostatLock":
