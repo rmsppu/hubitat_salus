@@ -371,7 +371,7 @@ Boolean executeGatewayCommand(String deviceId, String command, Object params) {
             
         case "setThermostatLock":
             def locked = params instanceof Map ? params.value : params
-            requestBody = "{\"requestAttr\":\"write\",\"id\":[{\"data\":{\"UniID\":\"${deviceId}\"},\"sTherUIS\":{\"SetLockKey\":${locked ? 1 : 0}}}]}""
+            requestBody = "{\"requestAttr\":\"write\",\"id\":[{\"data\":{\"UniID\":\"${deviceId}\"},\"sTherUIS\":{\"SetLockKey\":${locked ? 1 : 0}}}]}"
             break
             
         case "turnOnSwitch":

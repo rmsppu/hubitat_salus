@@ -8,7 +8,6 @@
  */
 
 import groovy.transform.Field
-import com.hubitat.app.DeviceWrapper
 
 // Supported thermostat capabilities and attributes
 @Field static final List<String> SUPPORTED_THERMOSTAT_MODES = ["off", "heat"]  // No cool for radiator heating

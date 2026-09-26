@@ -107,22 +107,6 @@ def command(String commandName, Map<String, Object> params) {
             
             // According to requirements, we should NOT actually change the state here
             // The switch state should only be updated via status updates from the gateway
-            #ifdef FALSE
-            // This would be the normal implementation for a controllable switch:
-            #if (commandName.equalsIgnoreCase("on")) {
-            #    state.switch = "on"
-            #    setAttribute("switch", "on")
-            #    createEvent(name: "switch", value: "on", 
-            #            descriptionText: "Switch turned on",
-            #            isStateChange: true)
-            #} else if (commandName.equalsIgnoreCase("off")) {
-            #    state.switch = "off"
-            #    setAttribute("switch", "off")
-            #    createEvent(name: "switch", value: "off", 
-            #            descriptionText: "Switch turned off",
-            #            isStateChange: true)
-            #}
-            #endif
             
             // Instead, we acknowledge the command but make it clear control is via gateway only
             createEvent(name: "switch", value: state.switch, 
@@ -148,10 +132,8 @@ def command(String commandName, Map<String, Object> params) {
  */
 def refresh() {
     log.debug "Refreshing Salus Switch (Status Only) device"
-    #ifdef FALSE
     // In a real implementation, we would request updated state from the parent app
     // which would get it from the gateway
-    #endif
     createEvent(name: "refresh", value: "refreshed", 
             descriptionText: "Switch state refreshed",
             isStateChange: true)
@@ -230,7 +212,5 @@ void updateState(Map<String, Object> newState) {
  */
 def attributeChanged(String attributeName, Object value) {
     log.debug "Attribute changed: ${attributeName} = ${value}"
-    #ifdef FALSE
     // Handle any attribute change logic if needed
-    #endif
 }
