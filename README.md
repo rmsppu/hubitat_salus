@@ -1,5 +1,7 @@
 /* Id: $Id$ */
+
 /* Date: $Date$ */
+
 /* Commit: $NextCommitNum$ */
 
 # Salus Hubitat Integration
@@ -80,7 +82,7 @@ Porting the original codebase (python), to Hubitat (Groovy) was done with AI ass
 
 ## License
 
-This project is licensed under the MIT OR Apache-2.0 license - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT OR Apache-2.0 license - see the [ATTRIBUTION](ATTRIBUTION.md) file and various LICENSE.* files for details.
 
 ## Version
 
