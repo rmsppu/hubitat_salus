@@ -4,10 +4,11 @@ This project ports the Salus iT600 Home Assistant integration to Hubitat Elevati
 
 ## Overview
 
-This integration connects to the Salus Universal Gateway (UG) 600 to provide local control of Salus heating systems, including:
-- Salus Wireless Thermostats (AWRT10RF, AS20WRF)
+This integration connects to the Salus Universal Gateway (SG888ZBWH) to provide local control of Salus heating systems, including:
+
+- Salus Wireless Thermostats (AWRT10RF)
 - Salus Wireless Pump Relay Control (AKL04P)
-- Other Salus devices connected to the gateway
+- Potentially other Salus devices connected to the gateway
 
 ## Attribution
 
@@ -28,6 +29,9 @@ This integration is based on and incorporates code patterns from several open-so
 - [Hubitat Developer Documentation](https://docs2.hubitat.com/)
 - [Hubitat Package Manager Documentation](https://hubitatpackageManager.readthedocs.io/)
 
+### AI-Assisted Development
+Porting the original codebase (python), to Hubitat (Groovy) was done with AI assistance, notably the KiloCode IDE with the NVIDIA Nemotron and Laguna Poolside models. See commit comments for details.
+
 ## Features
 
 - Local LAN-only communication with Salus gateway (no cloud dependency)
@@ -40,9 +44,9 @@ This integration is based on and incorporates code patterns from several open-so
 
 ## Supported Devices
 
-- Salus Universal Gateway (UG) 600
+- Salus Universal Gateway (SG888ZBWH)
 - Salus Wireless Pump Relay Control (4 Zone) model AKL04P
-- Salus Wireless Thermostat model AWRT10RF or AS20WRF
+- Salus Wireless Thermostat model AWRT10RF 
 
 ## Installation
 
