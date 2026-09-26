@@ -7,9 +7,9 @@
  *  This device is created and managed by the SalusThermostatController child app.
  */
 
-/* Id: $Id$ */
-/* Date: $Date$ */
-/* Commit: $NextCommitNum$ */
+/* Id: 01ca679 */
+/* Date: 2026-09-26 14:59:31 */
+/* Commit: 234 */
 
 import groovy.transform.Field
 
