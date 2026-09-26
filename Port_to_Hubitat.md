@@ -1,7 +1,7 @@
 # Overview the hubitat_salus project
 
 ## Intent
-This project is intended to port the HomeAssistant software to control Salus devices to Hubitat. The origin code currently works.
+This project is intended to port the HomeAssistant software to control Salus devices to Hubitat. The original code currently works.
 
 The new code must use software (Groovy), design, practices, and methods that are compatible with Hubitat Elevation.
 
