@@ -1,8 +1,4 @@
-# Define keyword substitution for specific file types
-*     filter=keyword_expansion
+*          text=auto
 
-# Define keyword expansion behavior
-[filter "keyword_expansion"]
-    clean = git-keyword-filter %f
-    smudge = cat
-    required
+# Define keyword substitution for specific file types
+*          filter=keyword_expansion
