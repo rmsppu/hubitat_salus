@@ -160,12 +160,12 @@ Commands:
 14. **No Retry Logic for Failed Commands** - `SalusGatewayConnector.groovy:360-374`
     - Issue: Commands fail silently if gateway is temporarily unreachable.
     - Fix: Add retry with exponential backoff for `executeGatewayCommand()`.
-    - **Status: NOT DONE** - Will address in next phase
+    - **Status: DONE** - Added `executeGatewayCommandWithRetry()` with exponential backoff (5s, 15s, 30s delays)
 
 15. **Missing Package Manifest for HPM** - Repository root
     - Issue: Port_to_Hubitat.md requires HPM compatibility.
     - Fix: Create `packageManifest.json` for Hubitat Package Manager.
-    - **Status: NOT DONE** - Will address in next phase
+    - **Status: DONE** - Created `packageManifest.json` with all apps, drivers, and library metadata
 
 ### LOW PRIORITY
 16. **Missing Build/Test Documentation in Drivers** - Both drivers

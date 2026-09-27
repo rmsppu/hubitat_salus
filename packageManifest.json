@@ -1,0 +1,55 @@
+{
+  "id": "salus-gateway-connector",
+  "name": "Salus Gateway Connector",
+  "version": "0.1.0",
+  "description": "Salus Universal Gateway (UG) 600 integration for Hubitat Elevation. Supports Salus Wireless Thermostat (AWRT10RF/AS20WRF) and Wireless Pump Relay Control (AKL04P).",
+  "author": "Salus Hubitat Integration",
+  "license": "MIT",
+  "homepage": "https://github.com/rmsppu/hubitat_salus",
+  "repository": "https://github.com/rmsppu/hubitat_salus",
+  "category": "Integrations",
+  "keywords": ["salus", "thermostat", "gateway", "heating", "hvac"],
+  "requirements": {
+    "firmware": "2.3.0"
+  },
+  "drivers": [
+    {
+      "name": "Salus Thermostat",
+      "namespace": "hubitat",
+      "description": "Virtual thermostat device for Salus heating systems (radiator/baseboard)"
+    },
+    {
+      "name": "Salus Switch (Status Only)",
+      "namespace": "hubitat",
+      "description": "Virtual switch device for displaying Salus relay zone status (control via gateway only)"
+    }
+  ],
+  "apps": [
+    {
+      "name": "Salus Gateway Connector",
+      "namespace": "hubitat",
+      "description": "Connects to Salus Universal Gateway to manage thermostats and relay zones",
+      "singleInstance": true
+    },
+    {
+      "name": "Salus Thermostat Controller",
+      "namespace": "hubitat",
+      "description": "Controls a Salus thermostat and creates a virtual thermostat device"
+    },
+    {
+      "name": "Salus Switch Controller",
+      "namespace": "hubitat",
+      "description": "Controls a Salus switch (relay zone) for status display"
+    }
+  ],
+  "libraries": [
+    {
+      "name": "SalusCommon",
+      "namespace": "hubitat",
+      "description": "Common constants and utility functions for Salus devices"
+    }
+  ],
+  "releaseNotes": "Initial release with support for Salus UG600 gateway, thermostats, and relay zones.",
+  "minHubitatVersion": "2.3.0",
+  "maxHubitatVersion": ""
+}

@@ -28,6 +28,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Removed `groovy.transform.Field` import from drivers** - `@Field` is for libraries, not drivers
 - **Added standard thermostat attributes** - Added `thermostatOperatingState` and `thermostatSetpoint` alias for Thermostat Scheduler compatibility
 - **Removed non-standard `supportedSwitchOperations` attribute** from SalusSwitch driver
+- **Added command retry logic with exponential backoff** - Added `executeGatewayCommandWithRetry()` with 3 retries at 5s, 15s, 30s delays
+- **Created `packageManifest.json`** for Hubitat Package Manager (HPM) compatibility
+- **Child apps now use library constants** - Using `SalusCommon.THERMOSTAT_PRESETS`, `THERMOSTAT_MODES`, `THERMOSTAT_FAN_MODES`
+- **Explicit deviceNetworkId in child device creation** - Using `salus_thermostat_${deviceId}` and `salus_switch_${deviceId}`
 
 ## [0.1.0] - 2026-09-18
 

@@ -9,15 +9,17 @@
  *  - CoCoHue - Hue Bridge Integration
  */
 
-/* Id: 3de7b7a */
-/* Date: 2026-09-27 15:55:41 */
-/* Commit: 238 */
+/* Id: 6de846e */
+/* Date: 2026-09-27 16:23:50 */
+/* Commit: 239 */
 
 #include hubitat.SalusCommon
 
 import groovy.json.JsonSlurper
 
 @Field static final Integer POLL_INTERVAL_MINUTES = 5
+@Field static final Integer MAX_COMMAND_RETRIES = 3
+@Field static final List<Integer> COMMAND_RETRY_DELAYS = [5, 15, 30]  // seconds
 
 definition (
     name: "Salus Gateway Connector",
@@ -378,6 +380,10 @@ def sendCommandToGateway(String deviceId, String command, Object params) {
 }
 
 Boolean executeGatewayCommand(String deviceId, String command, Object params) {
+    return executeGatewayCommandWithRetry(deviceId, command, params, 0)
+}
+
+Boolean executeGatewayCommandWithRetry(String deviceId, String command, Object params, Integer retryCount) {
     String euid = state.euidToken
     String host = state.gatewayIP
     
@@ -427,8 +433,20 @@ Boolean executeGatewayCommand(String deviceId, String command, Object params) {
         ], "commandResponseHandler")
         return true
     } catch (e) {
-        log.error "Command failed: ${e}"
-        return false
+        log.error "Command failed (attempt ${retryCount + 1}): ${e}"
+        
+        // Retry with exponential backoff if we haven't exceeded max retries
+        if (retryCount < MAX_COMMAND_RETRIES) {
+            Integer delay = COMMAND_RETRY_DELAYS[retryCount]
+            log.info "Scheduling command retry ${retryCount + 1}/${MAX_COMMAND_RETRIES} in ${delay} seconds"
+            runIn(delay, {
+                executeGatewayCommandWithRetry(deviceId, command, params, retryCount + 1)
+            })
+            return true  // Return true to indicate command was queued for retry
+        } else {
+            log.error "Command failed after ${MAX_COMMAND_RETRIES} retries"
+            return false
+        }
     }
 }
 
