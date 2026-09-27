@@ -1,6 +1,6 @@
-/* Id: 01ca679 */
-/* Date: 2026-09-26 14:59:31 */
-/* Commit: 234 */
+/* Id: a94df7a */
+/* Date: 2026-09-26 15:08:52 */
+/* Commit: 235 */
 
 # TODO.md - Plan for Porting Salus HomeAssistant Integration to Hubitat
 
@@ -41,7 +41,7 @@ This plan outlines the steps to port the Salus iT600 HomeAssistant integration t
 
 ### Test Gateway Available
 Hostname: `salus-gateway`
-EUID: `001E5E09021F3160`
+EUID: `001xxxxx``
 
 ## Technical Reference
 
@@ -68,7 +68,7 @@ Commands:
 
 1. **Deploy to Hubitat**:
    - Upload SalusGatewayConnector.groovy as an app
-   - Install and configure with gateway hostname "salus-gateway" and EUID "001E5E09021F3160"
+   - Install and configure with gateway hostname "salus-gateway" and EUID "001xxxxx`"
 
 2. **Test Connection**:
    - Verify HTTP POST to gateway works

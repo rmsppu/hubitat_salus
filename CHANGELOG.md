@@ -1,7 +1,3 @@
-/* Id: 01ca679 */
-/* Date: 2026-09-26 14:59:31 */
-/* Commit: 234 */
-
 # Changelog
 
 All notable changes to the Salus Hubitat Integration project will be documented in this file.
@@ -12,11 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
-- Fixed string concatenation error in `SalusGatewayConnector.groovy` - removed extra double quotes in `setThermostatLock` command payload that would cause malformed JSON
+- Converted `SalusCommon.groovy` from a `class` definition to proper Hubitat `library()` format that is compatible with Hubitat's architecture
+- Added AES-256-CBC encryption and decryption functions to `SalusCommon.groovy` library
+- Updated `handleGatewayResponse` in `SalusGatewayConnector.groovy` to properly decrypt gateway responses using the library methods
+- Removed duplicate encryption code from `SalusGatewayConnector.groovy` (now uses library functions)
+- Fixed string concatenation error in `SalusGatewayConnector.groovy` - removed extra double quotes in `setThermostatLock` command payload
 - Fixed typo in `SalusGatewayConnector.groovy` - changed `state.gollInterval` to `state.pollInterval` in scheduling function
-- Fixed hubitat scheduling cron expression in `SalusGatewayConnector.groovy` - changed from `"*/${state.pollInterval} * * * ? * * *"` to `"0 */${state.pollInterval} * * * ?"` for proper Hubitat compatibility
+- Fixed Hubitat scheduling cron expression - changed from `"*/${state.pollInterval} * * * ? * * *"` to `"0 */${state.pollInterval} * * * ?"`
 - Removed invalid C preprocessor directives (`#ifdef FALSE`, `#if`, `#endif`) from `SalusSwitch.groovy` that would cause Groovy compilation errors
-- Removed unused import `com.hubitat.app.DeviceWrapper` from `SalusThermostat.groovy`
+- Removed unused `DeviceWrapper` imports from child apps and drivers
+- Fixed `getParentApp()` methods in `SalusSwitchController.groovy` and `SalusThermostatController.groovy` to correctly use Hubitat's `parent` property instead of incorrectly calling `getChildDevice()`
+- Replaced generic `command()` method in device drivers with proper Hubitat capability methods (`on()`, `off()`, `refresh()` for switch; `setTemperature()`, `setHeatingSetpoint()`, `setThermostatMode()`, etc. for thermostat)
+- Added `#include hubitat.SalusCommon` directives to apps and child apps for library support
 
 ## [0.1.0] - 2026-09-18
 

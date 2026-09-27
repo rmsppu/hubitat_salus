@@ -8,12 +8,7 @@
  *  This device is created and managed by the SalusSwitchController child app.
  */
 
-/* Id: 01ca679 */
-/* Date: 2026-09-26 14:59:31 */
-/* Commit: 234 */
-
 import groovy.transform.Field
-import com.hubitat.app.DeviceWrapper
 
 metadata {
     definition (
@@ -91,44 +86,39 @@ def cleanup() {
 }
 
 /**
- * Handle incoming commands
+ * Handle "on" command
  * 
- * IMPORTANT: According to the requirements, this switch is for STATUS DISPLAY ONLY.
- * Control commands should NOT be supported - all control must go through the Salus gateway.
- * 
- * However, for compatibility with Hubitat's Switch capability, we'll accept
- * the commands but log that they're not supported for direct control and return
- * success without actually changing the state (since the real device is controlled via gateway).
+ * IMPORTANT: According to requirements, this switch is for STATUS DISPLAY ONLY.
+ * Direct control commands are not supported - all control must go through the
+ * Salus gateway.
  */
-def command(String commandName, Map<String, Object> params) {
-    log.debug "Switch command received: ${commandName} with params ${params}"
+def on() {
+    log.debug "Switch 'on' command received"
+    log.warn "Direct control of Salus switch ${state.deviceName} is not supported via Hubitat. " +
+            "All control must go through the Salus gateway. Command ignored."
     
-    switch (commandName.toLowerCase()) {
-        case "on":
-        case "off":
-            log.warn "Direct control of Salus switch ${state.deviceName} is not supported via Hubitat. " +
-                    "All control must go through the Salus gateway. Command ${commandName} ignored."
-            
-            // According to requirements, we should NOT actually change the state here
-            // The switch state should only be updated via status updates from the gateway
-            
-            // Instead, we acknowledge the command but make it clear control is via gateway only
-            createEvent(name: "switch", value: state.switch, 
-                    descriptionText: "Command received but control is via Salus gateway only",
-                    isStateChange: false)  // Not a state change since we didn't actually change state
-            
-            return true
-            
-        case "refresh":
-            refresh()
-            break
-            
-        default:
-            log.warn "Unsupported command: ${commandName}"
-            return false
-    }
+    // Don't actually change state - acknowledge but don't perform action
+    createEvent(name: "switch", value: state.switch, 
+            descriptionText: "Command received but control is via Salus gateway only",
+            isStateChange: false)
+}
+
+/**
+ * Handle "off" command
+ * 
+ * IMPORTANT: According to requirements, this switch is for STATUS DISPLAY ONLY.
+ * Direct control commands are not supported - all control must go through the
+ * Salus gateway.
+ */
+def off() {
+    log.debug "Switch 'off' command received"
+    log.warn "Direct control of Salus switch ${state.deviceName} is not supported via Hubitat. " +
+            "All control must go through the Salus gateway. Command ignored."
     
-    return true
+    // Don't actually change state - acknowledge but don't perform action
+    createEvent(name: "switch", value: state.switch, 
+            descriptionText: "Command received but control is via Salus gateway only",
+            isStateChange: false)
 }
 
 /**

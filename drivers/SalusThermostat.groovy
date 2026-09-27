@@ -7,10 +7,6 @@
  *  This device is created and managed by the SalusThermostatController child app.
  */
 
-/* Id: 01ca679 */
-/* Date: 2026-09-26 14:59:31 */
-/* Commit: 234 */
-
 import groovy.transform.Field
 
 // Supported thermostat capabilities and attributes
@@ -115,117 +111,99 @@ def cleanup() {
 }
 
 /**
- * Handle incoming commands
+ * Set the heating setpoint (also used as general temperature setpoint)
  */
-def command(String commandName, Map<String, Object> params) {
-    log.debug "Thermostat command received: ${commandName} with params ${params}"
-    
-    switch (commandName.toLowerCase()) {
-        case "settemperature":
-            if (params.value) {
-                def temp = params.value as Number
-                state.heatingSetpoint = temp
-                // For a set temperature command, we might also update current temp optimistically
-                // state.temperature = temp
-                setAttribute("heatingSetpoint", temp)
-                // Note: In a real implementation, we'd send this to the gateway via parent app
-                // But the actual command handling is done in the child app
-                createEvent(name: "thermostatSetpoint", value: temp, 
-                        descriptionText: "Heating setpoint changed to ${temp}°C",
-                        isStateChange: true)
-            }
-            break
-            
-        case "setheatingsetpoint":
-            if (params.value) {
-                def temp = params.value as Number
-                state.heatingSetpoint = temp
-                setAttribute("heatingSetpoint", temp)
-                createEvent(name: "thermostatSetpoint", value: temp, 
-                        descriptionText: "Heating setpoint changed to ${temp}°C",
-                        isStateChange: true)
-            }
-            break
-            
-        case "setcoolingsetpoint":
-            // Cooling setpoint not supported for radiator heating, but we'll accept it for compatibility
-            if (params.value) {
-                def temp = params.value as Number
-                state.coolingSetpoint = temp
-                setAttribute("coolingSetpoint", temp)
-                createEvent(name: "thermostatCoolingSetpoint", value: temp, 
-                        descriptionText: "Cooling setpoint changed to ${temp}°C",
-                        isStateChange: true)
-            }
-            break
-            
-        case "setthermostatmode":
-            if (params.value) {
-                def mode = params.value as String
-                if (SUPPORTED_THERMOSTAT_MODES.contains(mode)) {
-                    state.thermostatMode = mode
-                    setAttribute("thermostatMode", mode)
-                    createEvent(name: "thermostatMode", value: mode, 
-                            descriptionText: "Thermostat mode changed to ${mode}",
-                            isStateChange: true)
-                } else {
-                    log.warn "Unsupported thermostat mode: ${mode}"
-                }
-            }
-            break
-            
-        case "setthermostatfanmode":
-            // Fan mode is fixed for radiator systems, but we'll accept it for compatibility
-            if (params.value) {
-                def mode = params.value as String
-                if (SUPPORTED_THERMOSTAT_FAN_MODES.contains(mode)) {
-                    state.thermostatFanMode = mode
-                    setAttribute("thermostatFanMode", mode)
-                    createEvent(name: "thermostatFanMode", value: mode, 
-                            descriptionText: "Thermostat fan mode changed to ${mode}",
-                            isStateChange: true)
-                } else {
-                    log.warn "Unsupported thermostat fan mode: ${mode}"
-                }
-            }
-            break
-            
-        case "setpresetmode":
-            if (params.value) {
-                def preset = params.value as String
-                if (SUPPORTED_THERMOSTAT_PRESETS.contains(preset)) {
-                    state.presetMode = preset
-                    setAttribute("presetMode", preset)
-                    createEvent(name: "thermostatPresetMode", value: preset, 
-                            descriptionText: "Thermostat preset changed to ${preset}",
-                            isStateChange: true)
-                } else {
-                    log.warn "Unsupported thermostat preset: ${preset}"
-                }
-            }
-            break
-            
-        case "setthermostatlock":
-            if (params.value != null) {
-                def locked = params.value as Boolean
-                state.isLocked = locked
-                setAttribute("isLocked", locked)
-                createEvent(name: "thermostatLock", value: locked, 
-                        descriptionText: "Thermostat lock changed to ${locked}",
-                        isStateChange: true)
-            }
-            break
-            
-        case "refresh":
-            refresh()
-            break
-            
-        default:
-            log.warn "Unsupported command: ${commandName}"
-            return false
+def setTemperature(Number value) {
+    log.debug "setTemperature received: ${value}"
+    state.heatingSetpoint = value
+    setAttribute("heatingSetpoint", value)
+    createEvent(name: "thermostatSetpoint", value: value, 
+            descriptionText: "Heating setpoint changed to ${value}°C",
+            isStateChange: true)
+}
+
+/**
+ * Set the heating setpoint
+ */
+def setHeatingSetpoint(Number value) {
+    log.debug "setHeatingSetpoint received: ${value}"
+    state.heatingSetpoint = value
+    setAttribute("heatingSetpoint", value)
+    createEvent(name: "thermostatSetpoint", value: value, 
+            descriptionText: "Heating setpoint changed to ${value}°C",
+            isStateChange: true)
+}
+
+/**
+ * Set cooling setpoint (not supported for radiator heating, but accepted for compatibility)
+ */
+def setCoolingSetpoint(Number value) {
+    log.warn "Cooling setpoint not supported for radiator heating"
+    state.coolingSetpoint = value
+    setAttribute("coolingSetpoint", value)
+    createEvent(name: "thermostatCoolingSetpoint", value: value, 
+            descriptionText: "Cooling setpoint changed to ${value}°C",
+            isStateChange: true)
+}
+
+/**
+ * Set thermostat mode
+ */
+def setThermostatMode(String mode) {
+    log.debug "setThermostatMode received: ${mode}"
+    if (SUPPORTED_THERMOSTAT_MODES.contains(mode)) {
+        state.thermostatMode = mode
+        setAttribute("thermostatMode", mode)
+        createEvent(name: "thermostatMode", value: mode, 
+                descriptionText: "Thermostat mode changed to ${mode}",
+                isStateChange: true)
+    } else {
+        log.warn "Unsupported thermostat mode: ${mode}"
     }
-    
-    return true
+}
+
+/**
+ * Set thermostat fan mode (fixed for radiator systems, but accepted for compatibility)
+ */
+def setThermostatFanMode(String mode) {
+    log.debug "setThermostatFanMode received: ${mode}"
+    if (SUPPORTED_THERMOSTAT_FAN_MODES.contains(mode)) {
+        state.thermostatFanMode = mode
+        setAttribute("thermostatFanMode", mode)
+        createEvent(name: "thermostatFanMode", value: mode, 
+                descriptionText: "Thermostat fan mode changed to ${mode}",
+                isStateChange: true)
+    } else {
+        log.warn "Unsupported thermostat fan mode: ${mode}"
+    }
+}
+
+/**
+ * Set preset mode
+ */
+def setPresetMode(String preset) {
+    log.debug "setPresetMode received: ${preset}"
+    if (SUPPORTED_THERMOSTAT_PRESETS.contains(preset)) {
+        state.presetMode = preset
+        setAttribute("presetMode", preset)
+        createEvent(name: "thermostatPresetMode", value: preset, 
+                descriptionText: "Thermostat preset changed to ${preset}",
+                isStateChange: true)
+    } else {
+        log.warn "Unsupported thermostat preset: ${preset}"
+    }
+}
+
+/**
+ * Set thermostat lock
+ */
+def setThermostatLock(Boolean locked) {
+    log.debug "setThermostatLock received: ${locked}"
+    state.isLocked = locked
+    setAttribute("isLocked", locked)
+    createEvent(name: "thermostatLock", value: locked, 
+            descriptionText: "Thermostat lock changed to ${locked}",
+            isStateChange: true)
 }
 
 /**

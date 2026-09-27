@@ -7,9 +7,7 @@
  *  This child app is created and managed by the SalusGatewayConnector parent app.
  */
 
-/* Id: 01ca679 */
-/* Date: 2026-09-26 14:59:31 */
-/* Commit: 234 */
+#include hubitat.SalusCommon
 
 import groovy.transform.Field
 import com.hubitat.app.DeviceWrapper
@@ -125,12 +123,9 @@ String getParentAppId() {
 /**
  * Get the parent application wrapper
  */
-DeviceWrapper getParentApp() {
-    def parentAppId = getParentAppId()
-    if (parentAppId) {
-        return getChildDevice(parentAppId)
-    }
-    return null
+def getParentApp() {
+    // In Hubitat child apps, the parent app reference is accessed via the 'parent' property
+    return parent
 }
 
 /**

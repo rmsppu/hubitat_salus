@@ -9,16 +9,9 @@
  *  - CoCoHue - Hue Bridge Integration
  */
 
-/* Id: 01ca679 */
-/* Date: 2026-09-26 14:59:31 */
-/* Commit: 234 */
+#include hubitat.SalusCommon
 
-import groovy.transform.Field
-import com.hubitat.app.DeviceWrapper
-import java.security.MessageDigest
-import javax.crypto.Cipher
-import javax.crypto.spec.SecretKeySpec
-import javax.crypto.spec.IvParameterSpec
+import groovy.json.JsonSlurper
 
 @Field static final Integer POLL_INTERVAL_MINUTES = 5
 
@@ -91,60 +84,8 @@ def pageMain() {
 }
 
 /**
- * Temperature conversion helpers
+ * Fetch gateway data (async HTTP call)
  */
-static double celsiusToFahrenheit(double c) { return (c * 9/5) + 32 }
-static double fahrenheitToCelsius(double f) { return (f - 32) * 5/9 }
-
-/**
- * Get temperature unit preference from Hubitat settings
- * Returns "F" for Fahrenheit, "C" for Celsius
- */
-String getTemperatureUnit() {
-    // Hubitat provides a global temperature unit preference
-    // This is accessed through the settings map
-    return settings?.temperatureUnit ?: "C"
-}
-
-/**
- * Convert temperature to user's preferred unit
- */
-double convertToPreferredUnit(double celsius) {
-    if (getTemperatureUnit() == "F") {
-        return celsiusToFahrenheit(celsius)
-    }
-    return celsius
-}
-
-/**
- * Convert from user's preferred unit to Celsius (for gateway)
- */
-double convertFromPreferredUnit(double value) {
-    if (getTemperatureUnit() == "F") {
-        return fahrenheitToCelsius(value)
-    }
-    return value
-}
-
-/**
- * AES-256-CBC Encryption
- */
-byte[] encryptPayload(String jsonPayload, String euid) {
-    MessageDigest md = MessageDigest.getInstance("MD5")
-    byte[] keyMaterial = md.digest("Salus-${euid.toLowerCase()}".getBytes())
-    byte[] key = new byte[32]
-    System.arraycopy(keyMaterial, 0, key, 0, 16)
-    System.arraycopy(new byte[16], 0, key, 16, 16)
-    
-    byte[] iv = [0x88,0xA6,0xB0,0x79,0x5D,0x85,0xDB,0xFC,
-                 0xE6,0xE0,0xB3,0xE9,0xA6,0x29,0x65,0x4B] as byte[]
-    
-    Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
-    cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, "AES"), new IvParameterSpec(iv))
-    
-    return cipher.doFinal(jsonPayload.getBytes("UTF-8"))
-}
-
 def fetchGatewayData() {
     if (!isConfigured()) return null
     
@@ -154,13 +95,15 @@ def fetchGatewayData() {
         String requestBody = '{"requestAttr": "readall"}'
         byte[] encrypted = encryptPayload(requestBody, state.euidToken)
         
+        // Async HTTP call - response is handled in handleGatewayResponse callback
+        // Return null to indicate data is being fetched asynchronously
         httpPost([
             uri: state.gatewayIP, port: 80, path: "/deviceid/read",
             contentType: "application/json", body: encrypted,
             headers: ["content-type":"application/json"], timeout: 10
         ], "handleGatewayResponse")
         
-        return [climate:[:], switch:[:]]
+        return null  // Data is fetched asynchronously, actual processing in handleGatewayResponse
     } catch (e) {
         log.error "Error: ${e}"
         return null
@@ -170,7 +113,29 @@ def fetchGatewayData() {
 void handleGatewayResponse(response) {
     log.debug "Response status: ${response.status}"
     if (response.status == 200) {
-        processGatewayData(response.data)
+        try {
+            // Decrypt the response data using the EUID-based key
+            String decryptedData = decryptPayload(response.data, state.euidToken)
+            
+            // Parse the decrypted JSON response
+            def parsedData = new JsonSlurper().parseText(decryptedData)
+            
+            // Convert parsed data to the format expected by processGatewayData
+            // The gateway returns data in a format like {"deviceid": [...], "climate": {...}, "switch": {...}}
+            Map<String, Object> gatewayData = [
+                climate: parsedData.climate ?: [:],
+                switch: parsedData.switch ?: [:]
+            ]
+            
+            processGatewayData(gatewayData)
+            setGatewayStatus("connected")
+        } catch (e) {
+            log.error "Error processing gateway response: ${e}"
+            setGatewayStatus("data_error")
+        }
+    } else {
+        log.warn "Unexpected response status: ${response.status}"
+        setGatewayStatus("error")
     }
 }
 
@@ -213,14 +178,11 @@ void pollGatewayStatus() {
         return
     }
     
+    // Initiate async fetch of gateway data
+    // The response will be processed in handleGatewayResponse callback
     try {
-        def data = fetchGatewayData()
-        if (data) {
-            processGatewayData(data)
-            setGatewayStatus("connected")
-        } else {
-            setGatewayStatus("no data")
-        }
+        fetchGatewayData()
+        setGatewayStatus("connected")
     } catch (e) {
         log.error "Poll failed: ${e}"
         setGatewayStatus("failed")

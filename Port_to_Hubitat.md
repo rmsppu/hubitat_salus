@@ -1,6 +1,6 @@
-/* Id: 01ca679 */
-/* Date: 2026-09-26 14:59:31 */
-/* Commit: 234 */
+/* Id: a94df7a */
+/* Date: 2026-09-26 15:08:52 */
+/* Commit: 235 */
 
 # Overview the hubitat_salus project
 
@@ -63,6 +63,11 @@ https://docs2.hubitat.com/en/developer/best-practices
 https://github.com/tibrown/HubitatWork/blob/main/Docs/07-Best-Practices/Best-Practices.md
 https://community.hubitat.com/t/organizing-code-best-practices-ci-cd/161365/4
 
+## Allowed Imports
+The Hubitat environment restricts user code from importing arbitrary packages. Carefully study the list of allowed packages here:
+	https://docs2.hubitat.com/en/developer/allowed-imports
+and ensure that all code imports only packages on that list.
+
 ### Sample Projects
 Carefully review the projects in /home/bergman/Salus_for_Hubitat/Example_Hubitat_Projects for examples of working, production code using Groovy on the Hubitat platform. These can be used as samples to guide the structure, design, coding style, and methods for this port.
 
@@ -78,6 +83,14 @@ Use lots of comments, describing both specifics (ie., the purpose of a single va
 
 Be self-documenting. Source code must include comments for build an test steps.
 
+## Embedded keywords for Github expansion
+Each file MUST include the following comments verbatim near the top of the file:
+
+	/* Id: a94df7a */
+	/* Date: 2026-09-26 15:08:52 */
+	/* Commit: 235 */
+
+If missing, those must be added. The keywords (a94df7a, etc) must not be expanded or replaced or changed in any way
 
 ## Revision Control Commit Messages
 All github commit messages MUST start with the name of the IDE, AI model, and agent, with version numbers. For example:
