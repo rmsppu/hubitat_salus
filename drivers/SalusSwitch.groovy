@@ -1,5 +1,5 @@
 /**
- *  Salus Switch Device Driver (Status Display Only)
+ *  Salus Switch Device Driver -- Status Display Only
  *  
  *  Virtual switch device for displaying the status of Salus relay zones.
  *  NOTE: This device is for STATUS DISPLAY ONLY - control commands are NOT supported.
@@ -9,22 +9,22 @@
  *  
  *  COMMUNICATION FLOW:
  *  1. Salus Gateway sends status updates via HTTP response to parent app
- *  2. Parent app (SalusGatewayConnector) decrypts and processes response
- *  3. Parent app calls child app (SalusSwitchController) updateState()
- *  4. Child app calls driver's updateState() to update device attributes
+ *  2. Parent app -- SalusGatewayConnector -- decrypts and processes response
+ *  3. Parent app calls child app -- SalusSwitchController -- updateState
+ *  4. Child app calls driver's updateState to update device attributes
  *  5. Driver creates events for any changed attributes
  *  
- *  CONTROL FLOW (NOT SUPPORTED):
+ *  CONTROL FLOW -- NOT SUPPORTED:
  *  - Hubitat apps may send on/off commands to this virtual device
- *  - Driver on()/off() methods log warning and do NOT change state
+ *  - Driver on/off methods log warning and do NOT change state
  *  - All pump/relay control MUST go through Salus Gateway directly
- *  - Child app command() method returns success but does not forward to gateway
+ *  - Child app command method returns success but does not forward to gateway
  *  
  *  BUILD AND TEST:
- *  - Install SalusCommon library first (Libraries Code)
- *  - Install this driver (Drivers Code)  
- *  - Install SalusGatewayConnector parent app (Apps Code)
- *  - Install SalusSwitchController child app (Apps Code)
+ *  - Install SalusCommon library first -- Libraries Code
+ *  - Install this driver -- Drivers Code  
+ *  - Install SalusGatewayConnector parent app -- Apps Code
+ *  - Install SalusSwitchController child app -- Apps Code
  *  - Configure parent app with gateway IP and EUID
  *  - Parent app will discover devices and create child apps automatically
  *  - Test: Verify switch state updates when relay zone changes on gateway

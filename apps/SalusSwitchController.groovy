@@ -1,15 +1,15 @@
 /**
  *  Salus Switch Controller - Child Application
  *  
- *  Manages a single Salus switch device (relay zone) and creates a virtual switch
- *  device in Hubitat for status display only (control is via gateway).
+ *  Manages a single Salus switch device -- relay zone -- and creates a virtual switch
+ *  device in Hubitat for status display only -- control is via gateway.
  *  
  *  This child app is created and managed by the SalusGatewayConnector parent app.
  */
 
-/* Id: b3a5389 */
-/* Date: 2026-09-27 16:53:47 */
-/* Commit: 242 */
+/* Id: 89a95f8 */
+/* Date: 2026-09-27 17:02:15 */
+/* Commit: 243 */
 
 #include hubitat.SalusCommon
 

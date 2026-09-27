@@ -1,26 +1,26 @@
 /**
  *  Salus Thermostat Device Driver
  *  
- *  Virtual thermostat device for Salus heating systems (radiator/baseboard).
+ *  Virtual thermostat device for Salus heating systems -- radiator/baseboard.
  *  Compatible with Hubitat Thermostat Scheduler and other thermostat-aware apps.
  *  
  *  This device is created and managed by the SalusThermostatController child app.
  *  
  *  COMMUNICATION FLOW:
- *  1. Hubitat apps (e.g., Thermostat Scheduler) send commands to this virtual device
- *  2. Driver command methods (setTemperature, setHeatingSetpoint, etc.) are called
- *  3. Child app (SalusThermostatController) receives command via its command() method
- *  4. Child app forwards command to parent app (SalusGatewayConnector)
+ *  1. Hubitat apps -- e.g., Thermostat Scheduler -- send commands to this virtual device
+ *  2. Driver command methods -- setTemperature, setHeatingSetpoint, etc. -- are called
+ *  3. Child app -- SalusThermostatController -- receives command via its command method
+ *  4. Child app forwards command to parent app -- SalusGatewayConnector
  *  5. Parent app encrypts command and sends via HTTP POST to Salus Gateway
- *  6. Gateway responds asynchronously to parent app's handleGatewayResponse()
- *  7. Parent app decrypts response and calls child app's updateState()
- *  8. Child app calls driver's updateState() to update device attributes
+ *  6. Gateway responds asynchronously to parent app's handleGatewayResponse
+ *  7. Parent app decrypts response and calls child app's updateState
+ *  8. Child app calls driver's updateState to update device attributes
  *  
  *  BUILD AND TEST:
- *  - Install SalusCommon library first (Libraries Code)
- *  - Install this driver (Drivers Code)  
- *  - Install SalusGatewayConnector parent app (Apps Code)
- *  - Install SalusThermostatController child app (Apps Code)
+ *  - Install SalusCommon library first -- Libraries Code
+ *  - Install this driver -- Drivers Code  
+ *  - Install SalusGatewayConnector parent app -- Apps Code
+ *  - Install SalusThermostatController child app -- Apps Code
  *  - Configure parent app with gateway IP and EUID
  *  - Parent app will discover devices and create child apps automatically
  *  - Test: Use Thermostat Scheduler to change setpoint, verify gateway receives command

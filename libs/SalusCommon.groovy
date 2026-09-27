@@ -1,20 +1,19 @@
-/**
- *  Salus Common Library
- *
- *  Shared functionality for Salus Hubitat integration.
- *
- *  Inspired by the kasaCommon library in the Kasa Hubitat integration.
- *
- *  Based on work from:
- *  - Home Assistant Salus iT600 Integration (https://github.com/custom-components/salus)
- *  - CoCoHue - Hue Bridge Integration for Hubitat (https://github.com/HubitatCommunity/CoCoHue)
- *  - BlubButtons Hubitat Integration
- *  - Kasa Hubitat Integration
- */
+/* Salus Common Library 
+*
+*  Shared functionality for Salus Hubitat integration. 
+*
+*  Inspired by the kasaCommon library in the Kasa Hubitat integration. 
+*
+*  Based on work from: 
+*  - Home Assistant Salus iT600 Integration https://github.com/custom-components/salus 
+*  - CoCoHue - Hue Bridge Integration for Hubitat https://github.com/HubitatCommunity/CoCoHue 
+*  - BlubButtons Hubitat Integration 
+*  - Kasa Hubitat Integration
+*/ 
 
-/* Id: b3a5389 */
-/* Date: 2026-09-27 16:53:47 */
-/* Commit: 242 */
+/* Id: 89a95f8 */
+/* Date: 2026-09-27 17:02:15 */
+/* Commit: 243 */
 
 import groovy.transform.Field
 import java.security.MessageDigest

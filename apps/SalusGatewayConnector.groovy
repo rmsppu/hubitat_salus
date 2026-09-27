@@ -1,7 +1,7 @@
 /**
  *  Salus Gateway Connector - Parent Application
  *  
- *  Connects to Salus Universal Gateway (UG) 600 and manages child devices
+ *  Connects to Salus Universal Gateway and manages child devices
  *  for thermostats, relay zones, and other Salus devices.
  *  
  *  Based on Hubitat integration patterns from:
@@ -9,9 +9,9 @@
  *  - CoCoHue - Hue Bridge Integration
  */
 
-/* Id: b3a5389 */
-/* Date: 2026-09-27 16:53:47 */
-/* Commit: 242 */
+/* Id: 89a95f8 */
+/* Date: 2026-09-27 17:02:15 */
+/* Commit: 243 */
 
 #include hubitat.SalusCommon
 
