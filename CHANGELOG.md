@@ -20,6 +20,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed `getParentApp()` methods in `SalusSwitchController.groovy` and `SalusThermostatController.groovy` to correctly use Hubitat's `parent` property instead of incorrectly calling `getChildDevice()`
 - Replaced generic `command()` method in device drivers with proper Hubitat capability methods (`on()`, `off()`, `refresh()` for switch; `setTemperature()`, `setHeatingSetpoint()`, `setThermostatMode()`, etc. for thermostat)
 - Added `#include hubitat.SalusCommon` directives to apps and child apps for library support
+- **Removed invalid `com.hubitat.app.DeviceWrapper` import from child apps** (SalusThermostatController.groovy, SalusSwitchController.groovy) - DeviceWrapper is for drivers, not apps
+- **Removed logging methods from SalusCommon.groovy library** - `log` variable not available in library context
+- **Fixed temperature unit conversion in library** - Removed `getTemperatureUnit()`, `convertToPreferredUnit()`, `convertFromPreferredUnit()` that depended on unavailable `settings` object; now accept `temperatureUnit` parameter
+- **Fixed parent-child device tracking** - Parent app now tracks virtual device DNIs via `state.deviceMap[deviceId] = [childAppId: "...", virtualDni: "..."]`; added `updateVirtualDni()` method
+- **Fixed child app device lookups** - Child apps now use explicit DNI (`salus_thermostat_${deviceId}`, `salus_switch_${deviceId}`) instead of fragile display name matching
+- **Removed `groovy.transform.Field` import from drivers** - `@Field` is for libraries, not drivers
+- **Added standard thermostat attributes** - Added `thermostatOperatingState` and `thermostatSetpoint` alias for Thermostat Scheduler compatibility
+- **Removed non-standard `supportedSwitchOperations` attribute** from SalusSwitch driver
 
 ## [0.1.0] - 2026-09-18
 

@@ -12,9 +12,9 @@
  *  - Kasa Hubitat Integration
  */
 
-/* Id: a17a59d */
-/* Date: 2026-09-27 15:42:49 */
-/* Commit: 237 */
+/* Id: 3de7b7a */
+/* Date: 2026-09-27 15:55:41 */
+/* Commit: 238 */
 
 import groovy.transform.Field
 import java.security.MessageDigest
@@ -82,19 +82,12 @@ static double fahrenheitToCelsius(double f) {
 }
 
 /**
- * Get temperature unit preference from Hubitat settings.
- * Returns "F" for Fahrenheit, "C" for Celsius.
- */
-String getTemperatureUnit() {
-    // Hubitat provides a global temperature unit preference
-    return settings?.temperatureUnit ?: "C"
-}
-
-/**
  * Convert temperature to user's preferred unit.
+ * @param celsius Temperature in Celsius
+ * @param temperatureUnit "C" for Celsius, "F" for Fahrenheit
  */
-double convertToPreferredUnit(double celsius) {
-    if (getTemperatureUnit() == "F") {
+static double convertToPreferredUnit(double celsius, String temperatureUnit) {
+    if (temperatureUnit == "F") {
         return celsiusToFahrenheit(celsius)
     }
     return celsius
@@ -102,9 +95,11 @@ double convertToPreferredUnit(double celsius) {
 
 /**
  * Convert from user's preferred unit to Celsius (for gateway communication).
+ * @param value Temperature in user's preferred unit
+ * @param temperatureUnit "C" for Celsius, "F" for Fahrenheit
  */
-double convertFromPreferredUnit(double value) {
-    if (getTemperatureUnit() == "F") {
+static double convertFromPreferredUnit(double value, String temperatureUnit) {
+    if (temperatureUnit == "F") {
         return fahrenheitToCelsius(value)
     }
     return value
@@ -277,36 +272,4 @@ static Boolean isBlank(String str) {
  */
 static Boolean isNotBlank(String str) {
     return !isBlank(str)
-}
-
-// =============================================================================
-// Logging Utilities
-// =============================================================================
-
-/**
- * Logging helper method - debug level.
- */
-void logDebug(String message) {
-    log.debug message
-}
-
-/**
- * Logging helper method - info level.
- */
-void logInfo(String message) {
-    log.info message
-}
-
-/**
- * Logging helper method - warn level.
- */
-void logWarn(String message) {
-    log.warn message
-}
-
-/**
- * Logging helper method - error level.
- */
-void logError(String message) {
-    log.error message
 }

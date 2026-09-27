@@ -7,14 +7,13 @@
  *  This child app is created and managed by the SalusGatewayConnector parent app.
  */
 
-/* Id: a17a59d */
-/* Date: 2026-09-27 15:42:49 */
-/* Commit: 237 */
+/* Id: 3de7b7a */
+/* Date: 2026-09-27 15:55:41 */
+/* Commit: 238 */
 
 #include hubitat.SalusCommon
 
 import groovy.transform.Field
-import com.hubitat.app.DeviceWrapper
 
 definition (
     name: "Salus Thermostat Controller",
@@ -27,11 +26,6 @@ definition (
 preferences {
     page name: "pageMain"
 }
-
-// Supported thermostat attributes and commands (radiator heating only - no cooling/fan)
-@Field static final List<String> SUPPORTED_PRESETS = ["follow_schedule", "permanent_hold", "temporary_hold", "standby", "away"]
-@Field static final List<String> SUPPORTED_HVAC_MODES = ["off", "heat"]  // No cool for radiator heating
-@Field static final List<String> SUPPORTED_FAN_MODES = ["auto"]  // Fixed for radiator systems
 
 void installed() {
     log.debug "Installed Salus Thermostat Controller"
@@ -54,7 +48,7 @@ void deleted() {
 void initialize() {
     log.debug "Initializing Salus Thermostat Controller"
     
-    // Get configuration from parent app or settings
+    // Get configuration from settings (set by parent app)
     def deviceId = getDeviceId()
     def deviceName = getDeviceName()
     def deviceModel = getDeviceModel()
@@ -140,34 +134,38 @@ void createOrUpdateThermostatDevice() {
     
     // Check if we already have a virtual thermostat device
     String deviceLabel = "${getDeviceName() ?: 'Salus'} Thermostat"
-    DeviceWrapper existingDevice = getChildDevices().find { 
-        it.displayName == deviceLabel && it.deviceNetworkId?.startsWith("salus_thermostat_")
-    }
+    String expectedDni = "salus_thermostat_${getDeviceId()}"
+    DeviceWrapper existingDevice = getChildDevice(expectedDni)
     
     if (existingDevice) {
         log.debug "Virtual thermostat device already exists: ${existingDevice.displayName}"
         // Update device properties if needed
         updateVirtualThermostatDevice(existingDevice)
+        // Ensure we track the DNI
+        if (!state.virtualDeviceDni) {
+            state.virtualDeviceDni = expectedDni
+            notifyParentOfVirtualDni()
+        }
     } else {
         log.debug "Creating new virtual thermostat device"
-        createVirtualThermostatDevice(deviceLabel)
+        createVirtualThermostatDevice(deviceLabel, expectedDni)
     }
 }
 
 /**
  * Create a new virtual thermostat device
  */
-void createVirtualThermostatDevice(String label) {
-    log.debug "Creating virtual thermostat device: ${label}"
+void createVirtualThermostatDevice(String label, String dni) {
+    log.debug "Creating virtual thermostat device: ${label} with DNI: ${dni}"
     
     try {
         // Create a child device using a thermostat driver
-        // In a real implementation, we would specify the driver name
         String deviceId = createChildDevice(
                 "SalusThermostat",  // This would be the driver name
                 [
                     name: label,
                     label: label,
+                    deviceNetworkId: dni,
                     description: "Virtual thermostat for Salus ${getDeviceName() ?: 'device'}",
                     // Pass device-specific data via deviceData or settings
                     data: [
@@ -182,6 +180,10 @@ void createVirtualThermostatDevice(String label) {
         if (deviceId) {
             log.debug "Successfully created virtual thermostat device: ${deviceId}"
             
+            // Store the DNI for future lookups
+            state.virtualDeviceDni = dni
+            notifyParentOfVirtualDni()
+            
             // Initialize the device state
             initializeVirtualThermostatDevice(deviceId)
         } else {
@@ -189,6 +191,16 @@ void createVirtualThermostatDevice(String label) {
         }
     } catch (Exception e) {
         log.error "Error creating virtual thermostat device: ${e}"
+    }
+}
+
+/**
+ * Notify parent app of our virtual device DNI
+ */
+void notifyParentOfVirtualDni() {
+    def parentApp = getParentApp()
+    if (parentApp && state.virtualDeviceDni) {
+        parentApp.updateVirtualDni(getDeviceId(), state.virtualDeviceDni)
     }
 }
 
@@ -218,9 +230,9 @@ void initializeVirtualThermostatDevice(String deviceId) {
                 heatingSetpoint: 22.0,
                 thermostatMode: "heat",
                 thermostatFanMode: "auto",
-                supportedThermostatModes: SUPPORTED_HVAC_MODES as List,
-                supportedThermostatFanModes: SUPPORTED_FAN_MODES as List,
-                availableThermostatPresets: SUPPORTED_PRESETS as List
+                supportedThermostatModes: THERMOSTAT_MODES as List,
+                supportedThermostatFanModes: THERMOSTAT_FAN_MODES as List,
+                availableThermostatPresets: THERMOSTAT_PRESETS as List
         )
     }
 }
@@ -231,11 +243,13 @@ void initializeVirtualThermostatDevice(String deviceId) {
 void updateVirtualThermostatDeviceState(Map<String, Object> stateData) {
     log.debug "Updating virtual thermostat device state: ${stateData}"
     
-    // Find the virtual thermostat device
-    String deviceLabel = "${getDeviceName() ?: 'Salus'} Thermostat"
-    DeviceWrapper thermostatDevice = getChildDevices().find { 
-        it.displayName == deviceLabel && it.deviceNetworkId?.startsWith("salus_thermostat_")
+    String dni = state.virtualDeviceDni
+    if (!dni) {
+        log.warn "Virtual thermostat DNI not set"
+        return
     }
+    
+    DeviceWrapper thermostatDevice = getChildDevice(dni)
     
     if (thermostatDevice) {
         log.debug "Updating state for device ${thermostatDevice.deviceNetworkId}"
@@ -243,7 +257,7 @@ void updateVirtualThermostatDeviceState(Map<String, Object> stateData) {
         // Update the device attributes
         thermostatDevice.setDeviceState(stateData)
     } else {
-        log.warn "Virtual thermostat device not found for ${getDeviceName()}"
+        log.warn "Virtual thermostat device not found for DNI: ${dni}"
     }
 }
 

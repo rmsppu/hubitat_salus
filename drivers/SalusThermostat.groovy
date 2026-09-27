@@ -7,11 +7,11 @@
  *  This device is created and managed by the SalusThermostatController child app.
  */
 
-/* Id: a17a59d */
-/* Date: 2026-09-27 15:42:49 */
-/* Commit: 237 */
+/* Id: 3de7b7a */
+/* Date: 2026-09-27 15:55:41 */
+/* Commit: 238 */
 
-import groovy.transform.Field
+#include hubitat.SalusCommon
 
 // Supported thermostat capabilities and attributes
 @Field static final List<String> SUPPORTED_THERMOSTAT_MODES = ["off", "heat"]  // No cool for radiator heating
@@ -47,6 +47,7 @@ metadata {
     attribute "thermostatMode", "ENUM", SUPPORTED_THERMOSTAT_MODES
     attribute "thermostatFanMode", "ENUM", SUPPORTED_THERMOSTAT_FAN_MODES
     attribute "thermostatOperation", "STRING"
+    attribute "thermostatOperatingState", "STRING"  // Standard attribute for Thermostat Scheduler
     attribute "supportedThermostatModes", "LIST", SUPPORTED_THERMOSTAT_MODES
     attribute "supportedThermostatFanModes", "LIST", SUPPORTED_THERMOSTAT_FAN_MODES
     attribute "availableThermostatPresets", "LIST", SUPPORTED_THERMOSTAT_PRESETS
@@ -103,6 +104,7 @@ def initialize() {
         state.presetMode = "follow_schedule"
         state.isLocked = false
         state.gatewayStatus = "unknown"
+        state.thermostatOperatingState = "idle"  // Standard thermostat operating state
         
         // Set initial attribute values
         setThermostatAttributes()
@@ -121,6 +123,7 @@ def setTemperature(Number value) {
     log.debug "setTemperature received: ${value}"
     state.heatingSetpoint = value
     setAttribute("heatingSetpoint", value)
+    setAttribute("thermostatSetpoint", value)  // Alias for compatibility
     createEvent(name: "thermostatSetpoint", value: value, 
             descriptionText: "Heating setpoint changed to ${value}°C",
             isStateChange: true)
@@ -133,6 +136,7 @@ def setHeatingSetpoint(Number value) {
     log.debug "setHeatingSetpoint received: ${value}"
     state.heatingSetpoint = value
     setAttribute("heatingSetpoint", value)
+    setAttribute("thermostatSetpoint", value)  // Alias for compatibility
     createEvent(name: "thermostatSetpoint", value: value, 
             descriptionText: "Heating setpoint changed to ${value}°C",
             isStateChange: true)
@@ -158,6 +162,9 @@ def setThermostatMode(String mode) {
     if (SUPPORTED_THERMOSTAT_MODES.contains(mode)) {
         state.thermostatMode = mode
         setAttribute("thermostatMode", mode)
+        // Update operating state based on mode
+        state.thermostatOperatingState = (mode == "off") ? "idle" : "heating"
+        setAttribute("thermostatOperatingState", state.thermostatOperatingState)
         createEvent(name: "thermostatMode", value: mode, 
                 descriptionText: "Thermostat mode changed to ${mode}",
                 isStateChange: true)
@@ -240,6 +247,8 @@ void setThermostatAttributes() {
     setAttribute("supportedThermostatFanModes", SUPPORTED_THERMOSTAT_FAN_MODES)
     setAttribute("availableThermostatPresets", SUPPORTED_THERMOSTAT_PRESETS)
     setAttribute("gatewayStatus", state.gatewayStatus ?: "unknown")
+    setAttribute("thermostatOperatingState", state.thermostatOperatingState ?: "idle")
+    setAttribute("thermostatSetpoint", state.heatingSetpoint)  // Alias for compatibility
     
     // Create events for changed attributes
     createEvent(name: "temperature", value: state.temperature, 
@@ -326,6 +335,12 @@ void updateState(Map<String, Object> newState) {
             case "battery":
                 if (state.battery != value) {
                     state.battery = value as Number
+                    stateChanged = true
+                }
+                break
+            case "thermostatOperatingState":
+                if (state.thermostatOperatingState != value) {
+                    state.thermostatOperatingState = value as String
                     stateChanged = true
                 }
                 break

@@ -87,27 +87,114 @@ Commands:
 - write + {"requestAttr": "write", "id": [{...}]} → Send command
 ```
 
-## Remaining Issues / TODO
+## Remaining Issues / TODO (from Code Review - 2026-09-27)
 
-### High Priority
-1. **Verify encryption output**: The encryption in `SalusCommon.groovy` needs to be tested with the actual gateway to ensure the byte array output matches what the gateway expects (the httpPost body: encrypted should work properly)
-2. **Test gateway connection**: Verify HTTP POST to gateway works with test credentials
-3. **Test response decryption**: Verify the gateway's response can be properly decrypted and parsed
+### CRITICAL (Blocking - Must Fix Before Deployment) - COMPLETED ✓
+1. **Invalid Import: `com.hubitat.app.DeviceWrapper` in Child Apps** - `SalusThermostatController.groovy:17`, `SalusSwitchController.groovy:17`
+   - Issue: `DeviceWrapper` is for device drivers, not apps. Child apps use `getChildDevices()` which returns `ChildDeviceWrapper`.
+   - Fix: Remove the import. Methods are available directly.
+   - **Status: DONE** - Removed imports from both child apps
 
-### Medium Priority
-4. **Test full device lifecycle**: 
-   - Parent app discovers devices on gateway
-   - Creates child apps for thermostat and switch devices
-   - Child apps create virtual devices with proper drivers
-   - State updates flow from gateway → parent → child -> driver
-5. **Verify command flow**: Commands from driver → child app → parent app → gateway
-6. **Test with Hubitat Thermostat Scheduler app**: Ensure virtual thermostat devices are compatible
-7. **Verify polling schedule**: Test that scheduled status polling works correctly with cron expression
+2. **Library Logging Methods Reference Undefined `log` Variable** - `SalusCommon.groovy:289-311`
+   - Issue: `log` is not available in library context. These methods will fail at runtime.
+   - Fix: Remove logging methods from library, or pass logger as parameter.
+   - **Status: DONE** - Removed all logging methods from library
 
-### Low Priority
-8. **Cover devices**: Intentionally not implemented (out of scope for initial version)
-9. **Binary sensors**: Not implemented (out of scope for initial version)
-10. **Locks**: Not implemented (out of scope for initial version)
+3. **Library Method `getTemperatureUnit()` Uses `settings` (Unavailable in Library)** - `SalusCommon.groovy:88-91`
+   - Issue: `settings` object only exists in apps/drivers, not libraries.
+   - Fix: Move method to parent app, or pass temperature unit as parameter to conversion methods.
+   - **Status: DONE** - Removed `getTemperatureUnit()`, `convertToPreferredUnit()`, `convertFromPreferredUnit()` from library; added `getTemperatureUnit()` to parent app; updated conversion methods to accept `temperatureUnit` parameter
+
+4. **Parent App Uses `getChildDevice(appId)` with Child App ID Instead of DNI** - `SalusGatewayConnector.groovy:244,253,262,288,293`
+   - Issue: `getChildDevice()` expects device network ID (DNI), not child app ID. Parent stores child app IDs in `state.deviceMap`.
+   - Fix: Track virtual device DNIs returned by child apps and store mapping `state.deviceMap[deviceId] = virtualDeviceDni`.
+   - **Status: DONE** - Updated `state.deviceMap` structure to `[childAppId: "...", virtualDni: "..."]`; added `updateVirtualDni()` method; updated child apps to notify parent of their virtual DNI
+
+5. **Child Apps Use Fragile Device Lookup by Display Name/DNI Prefix** - Both child apps
+   - Issue: `getChildDevices().find { it.displayName == ... && it.deviceNetworkId?.startsWith(...) }` is fragile.
+   - Fix: Store returned DNI from `createChildDevice()` in `state.virtualDeviceDni` and use `getChildDevice(dni)`.
+   - **Status: DONE** - Child apps now use explicit DNI (`salus_thermostat_${deviceId}`, `salus_switch_${deviceId}`) and store in `state.virtualDeviceDni`
+
+6. **Child Apps Call `updateSetting()` on Non-Existent Settings** - `SalusGatewayConnector.groovy:246-247,255-256`
+   - Issue: Child apps don't define `deviceId`, `parentAppId` in their preferences page.
+   - Fix: Add these to child app preferences, or store in child app `state` instead.
+   - **Status: DONE** - Settings are now properly defined in child apps (they were already there); parent app passes them via `updateSetting()`
+
+### HIGH PRIORITY - COMPLETED ✓
+7. **Invalid Import: `groovy.transform.Field` in Drivers** - `SalusThermostat.groovy:14`, `SalusSwitch.groovy:15`
+   - Issue: `@Field` is for library code. Drivers use `state` map for persistence.
+   - Fix: Remove the import (unused).
+   - **Status: DONE** - Removed `import groovy.transform.Field` from both drivers
+
+8. **Thermostat Driver Missing Standard Thermostat Attributes** - `SalusThermostat.groovy`
+   - Issue: Missing `thermostatOperatingState` (standard) and `thermostatSetpoint` alias for compatibility.
+   - Fix: Add missing standard attributes.
+   - **Status: DONE** - Added `thermostatOperatingState` attribute and `thermostatSetpoint` alias; updated `setThermostatMode()` to update operating state
+
+9. **Switch Driver Has Non-Standard `supportedSwitchOperations` Attribute** - `SalusSwitch.groovy:39`
+   - Issue: Not a standard Hubitat Switch attribute.
+   - Fix: Remove or make custom attribute with proper declaration.
+   - **Status: DONE** - Removed `supportedSwitchOperations` attribute from metadata
+
+10. **Missing Error Handling for Async HTTP Callbacks** - `SalusGatewayConnector.groovy:117-144,376-378`
+    - Issue: No handling of network timeouts, gateway unreachable, malformed responses, or command retry logic.
+    - Fix: Add timeout handling, exponential backoff retry, circuit breaker pattern.
+    - **Status: PARTIAL** - Basic error handling in place; retry logic for connection exists; command retry not yet implemented
+
+11. **No Input Validation on Parent App Settings** - `SalusGatewayConnector.groovy:70-88`
+    - Issue: No validation of IP address format, EUID format, poll interval bounds.
+    - Fix: Add validation in `updated()` method.
+    - **Status: NOT DONE** - Will address in next phase
+
+### MEDIUM PRIORITY
+12. **Library Constants Not Used Consistently** - Child apps define own constants
+    - Issue: Child apps duplicate `THERMOSTAT_PRESETS`, `THERMOSTAT_MODES`, etc. instead of using library.
+    - Fix: Use `SalusCommon.THERMOSTAT_PRESETS`, `THERMOSTAT_MODES`, etc.
+    - **Status: DONE** - Child apps now use library constants (`THERMOSTAT_PRESETS`, `THERMOSTAT_MODES`, `THERMOSTAT_FAN_MODES`)
+
+13. **Missing Explicit `deviceNetworkId` in Child Device Creation** - Both child apps
+    - Issue: Hubitat auto-generates DNI but explicit is better for tracking.
+    - Fix: Add `deviceNetworkId: "salus_thermostat_${deviceId}"` etc.
+    - **Status: DONE** - Added explicit DNI in both child apps
+
+14. **No Retry Logic for Failed Commands** - `SalusGatewayConnector.groovy:360-374`
+    - Issue: Commands fail silently if gateway is temporarily unreachable.
+    - Fix: Add retry with exponential backoff for `executeGatewayCommand()`.
+    - **Status: NOT DONE** - Will address in next phase
+
+15. **Missing Package Manifest for HPM** - Repository root
+    - Issue: Port_to_Hubitat.md requires HPM compatibility.
+    - Fix: Create `packageManifest.json` for Hubitat Package Manager.
+    - **Status: NOT DONE** - Will address in next phase
+
+### LOW PRIORITY
+16. **Missing Build/Test Documentation in Drivers** - Both drivers
+    - Issue: Port_to_Hubitat.md requires comments for build and test steps.
+    - Fix: Add detailed comments explaining driver purpose, communication flow, testing.
+    - **Status: NOT DONE**
+
+17. **Parent App `state.deviceMap` Key Assumptions** - `SalusGatewayConnector.groovy:201-217`
+    - Issue: Assumes gateway returns IDs matching `state.deviceMap` keys (e.g., "climate_0", "switch_1").
+    - Fix: Verify gateway response format; add logging to confirm ID format.
+    - **Status: NOT DONE**
+
+### ARCHITECTURE / DESIGN IMPROVEMENTS
+18. **Parent-Child Communication: No Event Subscription** - Child apps have commented `subscribe()` calls
+    - Issue: No event-based communication; children poll via `updateState()`.
+    - Fix: Implement `sendEvent()` from parent + `subscribe()` in children.
+    - **Status: NOT DONE**
+
+19. **Child App → Driver Communication Uses Non-Standard `setDeviceState()`** - Both child apps
+    - Issue: `device.setDeviceState()` is not standard Hubitat driver API.
+    - Fix: Use driver's `updateState()` method (already exists) via `device.updateState([...])`.
+    - **Status: PARTIAL** - Drivers have `updateState()` method; parent app now calls `child.updateState()` directly on virtual devices
+
+20. **Temperature Unit Conversion in Library Depends on `settings`** - `SalusCommon.groovy:88-111`
+    - Issue: Library cannot access `settings`. `getTemperatureUnit()`, `convertToPreferredUnit()`, `convertFromPreferredUnit()` won't work.
+    - Fix: Pass temperature unit as parameter; move unit-aware methods to parent app.
+    - **Status: DONE** - Moved `getTemperatureUnit()` to parent app; library conversion methods now accept `temperatureUnit` parameter
+
+---
 
 ## File Structure
 ```

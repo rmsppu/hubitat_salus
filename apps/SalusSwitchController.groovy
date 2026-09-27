@@ -7,14 +7,13 @@
  *  This child app is created and managed by the SalusGatewayConnector parent app.
  */
 
-/* Id: a17a59d */
-/* Date: 2026-09-27 15:42:49 */
-/* Commit: 237 */
+/* Id: 3de7b7a */
+/* Date: 2026-09-27 15:55:41 */
+/* Commit: 238 */
 
 #include hubitat.SalusCommon
 
 import groovy.transform.Field
-import com.hubitat.app.DeviceWrapper
 
 definition (
     name: "Salus Switch Controller",
@@ -27,9 +26,6 @@ definition (
 preferences {
     page name: "pageMain"
 }
-
-// Note: This is for status display only - control commands are NOT supported
-// All control must go through the Salus gateway
 
 void installed() {
     log.debug "Installed Salus Switch Controller"
@@ -52,7 +48,7 @@ void deleted() {
 void initialize() {
     log.debug "Initializing Salus Switch Controller"
     
-    // Get configuration from parent app or settings
+    // Get configuration from settings (set by parent app)
     def deviceId = getDeviceId()
     def deviceName = getDeviceName()
     def deviceModel = getDeviceModel()
@@ -139,34 +135,38 @@ void createOrUpdateSwitchDevice() {
     
     // Check if we already have a virtual switch device
     String deviceLabel = "${getDeviceName() ?: 'Salus'} Switch"
-    DeviceWrapper existingDevice = getChildDevices().find { 
-        it.displayName == deviceLabel && it.deviceNetworkId?.startsWith("salus_switch_")
-    }
+    String expectedDni = "salus_switch_${getDeviceId()}"
+    DeviceWrapper existingDevice = getChildDevice(expectedDni)
     
     if (existingDevice) {
         log.debug "Virtual switch device already exists: ${existingDevice.displayName}"
         // Update device properties if needed
         updateVirtualSwitchDevice(existingDevice)
+        // Ensure we track the DNI
+        if (!state.virtualDeviceDni) {
+            state.virtualDeviceDni = expectedDni
+            notifyParentOfVirtualDni()
+        }
     } else {
         log.debug "Creating new virtual switch device"
-        createVirtualSwitchDevice(deviceLabel)
+        createVirtualSwitchDevice(deviceLabel, expectedDni)
     }
 }
 
 /**
  * Create a new virtual switch device
  */
-void createVirtualSwitchDevice(String label) {
-    log.debug "Creating virtual switch device: ${label}"
+void createVirtualSwitchDevice(String label, String dni) {
+    log.debug "Creating virtual switch device: ${label} with DNI: ${dni}"
     
     try {
         // Create a child device using a switch driver
-        // In a real implementation, we would specify the driver name
         String deviceId = createChildDevice(
                 "SalusSwitch",  // This would be the driver name
                 [
                     name: label,
                     label: label,
+                    deviceNetworkId: dni,
                     description: "Virtual switch for Salus ${getDeviceName() ?: 'device'} (status only)",
                     // Pass device-specific data via deviceData or settings
                     data: [
@@ -181,6 +181,10 @@ void createVirtualSwitchDevice(String label) {
         if (deviceId) {
             log.debug "Successfully created virtual switch device: ${deviceId}"
             
+            // Store the DNI for future lookups
+            state.virtualDeviceDni = dni
+            notifyParentOfVirtualDni()
+            
             // Initialize the device state
             initializeVirtualSwitchDevice(deviceId)
         } else {
@@ -188,6 +192,16 @@ void createVirtualSwitchDevice(String label) {
         }
     } catch (Exception e) {
         log.error "Error creating virtual switch device: ${e}"
+    }
+}
+
+/**
+ * Notify parent app of our virtual device DNI
+ */
+void notifyParentOfVirtualDni() {
+    def parentApp = getParentApp()
+    if (parentApp && state.virtualDeviceDni) {
+        parentApp.updateVirtualDni(getDeviceId(), state.virtualDeviceDni)
     }
 }
 
@@ -225,11 +239,13 @@ void initializeVirtualSwitchDevice(String deviceId) {
 void updateVirtualSwitchDeviceState(Map<String, Object> stateData) {
     log.debug "Updating virtual switch device state: ${stateData}"
     
-    // Find the virtual switch device
-    String deviceLabel = "${getDeviceName() ?: 'Salus'} Switch"
-    DeviceWrapper switchDevice = getChildDevices().find { 
-        it.displayName == deviceLabel && it.deviceNetworkId?.startsWith("salus_switch_")
+    String dni = state.virtualDeviceDni
+    if (!dni) {
+        log.warn "Virtual switch DNI not set"
+        return
     }
+    
+    DeviceWrapper switchDevice = getChildDevice(dni)
     
     if (switchDevice) {
         log.debug "Updating state for device ${switchDevice.deviceNetworkId}"
@@ -237,7 +253,7 @@ void updateVirtualSwitchDeviceState(Map<String, Object> stateData) {
         // Update the device attributes
         switchDevice.setDeviceState(stateData)
     } else {
-        log.warn "Virtual switch device not found for ${getDeviceName()}"
+        log.warn "Virtual switch device not found for DNI: ${dni}"
     }
 }
 

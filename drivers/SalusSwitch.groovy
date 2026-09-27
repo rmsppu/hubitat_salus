@@ -8,11 +8,11 @@
  *  This device is created and managed by the SalusSwitchController child app.
  */
 
-/* Id: a17a59d */
-/* Date: 2026-09-27 15:42:49 */
-/* Commit: 237 */
+/* Id: 3de7b7a */
+/* Date: 2026-09-27 15:55:41 */
+/* Commit: 238 */
 
-import groovy.transform.Field
+#include hubitat.SalusCommon
 
 metadata {
     definition (
@@ -36,7 +36,6 @@ metadata {
     
     // Attributes
     attribute "switch", "ENUM", ["on", "off"]
-    attribute "supportedSwitchOperations", "LIST", ["on", "off"]
     attribute "deviceName", "STRING"
     attribute "deviceModel", "STRING"
     attribute "gatewayStatus", "STRING"
@@ -144,7 +143,6 @@ void setSwitchAttributes() {
     log.debug "Setting switch attributes"
     
     setAttribute("switch", state.switch)
-    setAttribute("supportedSwitchOperations", ["on", "off"] as List)
     setAttribute("deviceName", state.deviceName)
     setAttribute("deviceModel", state.deviceModel)
     setAttribute("gatewayStatus", state.gatewayStatus ?: "unknown")

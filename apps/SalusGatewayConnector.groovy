@@ -9,9 +9,9 @@
  *  - CoCoHue - Hue Bridge Integration
  */
 
-/* Id: a17a59d */
-/* Date: 2026-09-27 15:42:49 */
-/* Commit: 237 */
+/* Id: 3de7b7a */
+/* Date: 2026-09-27 15:55:41 */
+/* Commit: 238 */
 
 #include hubitat.SalusCommon
 
@@ -51,6 +51,7 @@ void initialize() {
     if (!state.euidToken) state.euidToken = ""
     if (!state.pollInterval) state.pollInterval = POLL_INTERVAL_MINUTES
     if (!state.deviceMap) state.deviceMap = [:]
+    // deviceMap structure: [deviceId: [childAppId: "...", virtualDni: "..."]]
     
     if (isConfigured()) {
         connectToGateway()
@@ -65,6 +66,14 @@ void cleanup() {
 
 Boolean isConfigured() {
     return state.gatewayIP?.trim() && state.euidToken?.trim()
+}
+
+/**
+ * Get temperature unit preference from Hubitat settings.
+ * Returns "F" for Fahrenheit, "C" for Celsius.
+ */
+String getTemperatureUnit() {
+    return settings?.temperatureUnit ?: "C"
 }
 
 def pageMain() {
@@ -225,7 +234,9 @@ void createClimateChildDevice(String deviceId, Map<String, Object> data) {
         [label: "${data.name ?: 'Thermostat'} Thermostat", installOnOpen: true])
     if (childId) {
         state.deviceMap = state.deviceMap ?: [:]
-        state.deviceMap[deviceId] = childId
+        // Store both child app ID and placeholder for virtual device DNI
+        // Child app will populate virtualDni when it creates the device
+        state.deviceMap[deviceId] = [childAppId: childId, virtualDni: null]
         configureClimateChildDevice(childId, deviceId, data)
     }
 }
@@ -235,39 +246,45 @@ void createSwitchChildDevice(String deviceId, Map<String, Object> data) {
         [label: "${data.name ?: 'Switch'} Switch", installOnOpen: true])
     if (childId) {
         state.deviceMap = state.deviceMap ?: [:]
-        state.deviceMap[deviceId] = childId
+        state.deviceMap[deviceId] = [childAppId: childId, virtualDni: null]
         configureSwitchChildDevice(childId, deviceId, data)
     }
 }
 
 void configureClimateChildDevice(String appId, String deviceId, Map<String, Object> data) {
-    def child = getChildDevice(appId)
+    def child = getChildApp(appId)
     if (child) {
+        // Pass configuration via settings (must be defined in child app preferences)
         child.updateSetting("deviceId", deviceId)
-        child.updateSetting("parentAppId", device.id)
+        child.updateSetting("deviceName", data.name ?: "Thermostat")
+        child.updateSetting("deviceModel", data.model ?: "Unknown")
+        child.updateSetting("parentAppId", this.app.id)
         initializeClimateState(appId, data)
     }
 }
 
 void configureSwitchChildDevice(String appId, String deviceId, Map<String, Object> data) {
-    def child = getChildDevice(appId)
+    def child = getChildApp(appId)
     if (child) {
         child.updateSetting("deviceId", deviceId)
-        child.updateSetting("parentAppId", device.id)
+        child.updateSetting("deviceName", data.name ?: "Switch")
+        child.updateSetting("deviceModel", data.model ?: "Unknown")
+        child.updateSetting("parentAppId", this.app.id)
         initializeSwitchState(appId, data)
     }
 }
 
 void initializeClimateState(String appId, Map<String, Object> data) {
-    def child = getChildDevice(appId)
+    def child = getChildApp(appId)
     double tempC = data.currentTemperature ?: 0
     double setpointC = data.targetTemperature ?: 0
+    String tempUnit = getTemperatureUnit()
     
     child.setDeviceState(
         temperature: tempC,
-        temperatureF: celsiusToFahrenheit(tempC),
+        temperatureF: convertToPreferredUnit(tempC, tempUnit),
         heatingSetpoint: setpointC,
-        heatingSetpointF: celsiusToFahrenheit(setpointC),
+        heatingSetpointF: convertToPreferredUnit(setpointC, tempUnit),
         presetMode: data.presetMode ?: "follow_schedule",
         thermostatMode: data.hvacMode ?: "heat",
         hvacAction: data.hvacAction ?: "idle",
@@ -276,7 +293,7 @@ void initializeClimateState(String appId, Map<String, Object> data) {
 }
 
 void initializeSwitchState(String appId, Map<String, Object> data) {
-    def child = getChildDevice(appId)
+    def child = getChildApp(appId)
     child.setDeviceState(
         switch: data.state ?: "off",
         switchName: data.name ?: "",
@@ -285,14 +302,39 @@ void initializeSwitchState(String appId, Map<String, Object> data) {
 }
 
 void updateClimateChildDevice(String deviceId, Map<String, Object> data) {
-    String appId = state.deviceMap?.get(deviceId)
-    if (appId) initializeClimateState(appId, data)
+    def deviceInfo = state.deviceMap?.get(deviceId)
+    if (deviceInfo && deviceInfo.virtualDni) {
+        def child = getChildDevice(deviceInfo.virtualDni)
+        if (child) {
+            String tempUnit = getTemperatureUnit()
+            double tempC = data.currentTemperature ?: 0
+            double setpointC = data.targetTemperature ?: 0
+            child.updateState(
+                temperature: tempC,
+                heatingSetpoint: setpointC,
+                presetMode: data.presetMode,
+                thermostatMode: data.hvacMode,
+                hvacAction: data.hvacAction,
+                isLocked: data.isLocked
+            )
+        }
+    } else if (deviceInfo && deviceInfo.childAppId) {
+        // Fallback: try via child app
+        String appId = deviceInfo.childAppId
+        initializeClimateState(appId, data)
+    }
 }
 
 void updateSwitchChildDevice(String deviceId, Map<String, Object> data) {
-    String appId = state.deviceMap?.get(deviceId)
-    if (appId) {
-        getChildDevice(appId)?.setDeviceState(switch: data.state ?: "off")
+    def deviceInfo = state.deviceMap?.get(deviceId)
+    if (deviceInfo && deviceInfo.virtualDni) {
+        def child = getChildDevice(deviceInfo.virtualDni)
+        if (child) {
+            child.updateState(switch: data.state ?: "off")
+        }
+    } else if (deviceInfo && deviceInfo.childAppId) {
+        String appId = deviceInfo.childAppId
+        getChildApp(appId)?.setDeviceState(switch: data.state ?: "off")
     }
 }
 
@@ -301,9 +343,26 @@ void cleanupRemovedDevices(Map<String, Object> data) {
     ids.addAll(data.climate?.keySet() ?: [])
     ids.addAll(data.switch?.keySet() ?: [])
     
-    state.deviceMap?.findAll { id, _ -> !ids.contains(id) }?.each { id, appId ->
-        try { deleteChildDevice(appId); state.deviceMap.remove(id) }
+    state.deviceMap?.findAll { id, _ -> !ids.contains(id) }?.each { id, info ->
+        try { 
+            if (info.childAppId) deleteChildApp(info.childAppId)
+            if (info.virtualDni) deleteChildDevice(info.virtualDni)
+            state.deviceMap.remove(id) 
+        }
         catch (e) { log.error "Error removing ${id}: ${e}" }
+    }
+}
+
+/**
+ * Called by child app to register its virtual device DNI
+ */
+void updateVirtualDni(String deviceId, String virtualDni) {
+    def deviceInfo = state.deviceMap?.get(deviceId)
+    if (deviceInfo) {
+        deviceInfo.virtualDni = virtualDni
+        log.debug "Updated virtual DNI for ${deviceId}: ${virtualDni}"
+    } else {
+        log.warn "updateVirtualDni called for unknown deviceId: ${deviceId}"
     }
 }
 
@@ -327,7 +386,7 @@ Boolean executeGatewayCommand(String deviceId, String command, Object params) {
         case "setTemperature":
         case "setHeatingSetpoint":
             // Convert from user's preferred unit to Celsius
-            double tempC = convertFromPreferredUnit(params instanceof Map ? params.value : params)
+            double tempC = convertFromPreferredUnit(params instanceof Map ? params.value : params, getTemperatureUnit())
             int tempX100 = Math.round(tempC * 100)
             requestBody = "{\"requestAttr\":\"write\",\"id\":[{\"data\":{\"UniID\":\"${deviceId}\"},\"sIT600TH\":{\"SetHeatingSetpoint_x100\":${tempX100}}}]}"
             break
