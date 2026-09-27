@@ -7,9 +7,9 @@
  *  This child app is created and managed by the SalusGatewayConnector parent app.
  */
 
-/* Id: d8261a2 */
-/* Date: 2026-09-27 16:30:45 */
-/* Commit: 241 */
+/* Id: b3a5389 */
+/* Date: 2026-09-27 16:53:47 */
+/* Commit: 242 */
 
 #include hubitat.SalusCommon
 
@@ -18,7 +18,7 @@ import groovy.transform.Field
 definition (
     name: "Salus Switch Controller",
     namespace: "Salus_for_Hubitat",
-    author: "Salus Hubitat Integration",
+    author: "rmsppu@githum.com",
     description: "Controls a Salus switch (relay zone) for status display",
     category: "Convenience"
 )

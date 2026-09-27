@@ -37,7 +37,7 @@ metadata {
     definition (
         name: "Salus Switch (Status Only)",
         namespace: "Salus_for_Hubitat",
-        author: "Salus Hubitat Integration",
+        author: "rmsppu@githum.com",
         description: "Virtual switch device for displaying Salus relay zone status (control via gateway only)",
         // The Vocab key allows this device to work with voice assistants
         vocab: {

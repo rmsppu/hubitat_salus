@@ -9,9 +9,9 @@
  *  - CoCoHue - Hue Bridge Integration
  */
 
-/* Id: d8261a2 */
-/* Date: 2026-09-27 16:30:45 */
-/* Commit: 241 */
+/* Id: b3a5389 */
+/* Date: 2026-09-27 16:53:47 */
+/* Commit: 242 */
 
 #include hubitat.SalusCommon
 
@@ -24,7 +24,7 @@ import groovy.json.JsonSlurper
 definition (
     name: "Salus Gateway Connector",
     namespace: "Salus_for_Hubitat",
-    author: "Salus Hubitat Integration",
+    author: "rmsppu@githum.com",
     description: "Connects to Salus Universal Gateway to manage thermostats and relay zones",
     category: "Convenience",
     menu: "Integrations"

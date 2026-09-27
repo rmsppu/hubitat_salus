@@ -12,9 +12,9 @@
  *  - Kasa Hubitat Integration
  */
 
-/* Id: d8261a2 */
-/* Date: 2026-09-27 16:30:45 */
-/* Commit: 241 */
+/* Id: b3a5389 */
+/* Date: 2026-09-27 16:53:47 */
+/* Commit: 242 */
 
 import groovy.transform.Field
 import java.security.MessageDigest
@@ -23,7 +23,7 @@ import javax.crypto.spec.SecretKeySpec
 import javax.crypto.spec.IvParameterSpec
 
 library (
-    author: "Salus Hubitat Integration",
+    author: "rmsppu@githum.com",
     category: "Utilities",
     description: "Common constants and utility functions for Salus devices",
     name: "SalusCommon",

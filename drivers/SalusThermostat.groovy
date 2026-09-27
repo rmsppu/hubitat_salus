@@ -33,7 +33,7 @@ metadata {
     definition (
         name: "Salus Thermostat",
         namespace: "Salus_for_Hubitat",
-        author: "Salus Hubitat Integration",
+        author: "rmsppu@githum.com",
         description: "Virtual thermostat device for Salus heating systems",
         // The Vocab key allows this device to work with voice assistants
         vocab: {
