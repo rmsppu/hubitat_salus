@@ -5,18 +5,29 @@
  *  Compatible with Hubitat Thermostat Scheduler and other thermostat-aware apps.
  *  
  *  This device is created and managed by the SalusThermostatController child app.
+ *  
+ *  COMMUNICATION FLOW:
+ *  1. Hubitat apps (e.g., Thermostat Scheduler) send commands to this virtual device
+ *  2. Driver command methods (setTemperature, setHeatingSetpoint, etc.) are called
+ *  3. Child app (SalusThermostatController) receives command via its command() method
+ *  4. Child app forwards command to parent app (SalusGatewayConnector)
+ *  5. Parent app encrypts command and sends via HTTP POST to Salus Gateway
+ *  6. Gateway responds asynchronously to parent app's handleGatewayResponse()
+ *  7. Parent app decrypts response and calls child app's updateState()
+ *  8. Child app calls driver's updateState() to update device attributes
+ *  
+ *  BUILD AND TEST:
+ *  - Install SalusCommon library first (Libraries Code)
+ *  - Install this driver (Drivers Code)  
+ *  - Install SalusGatewayConnector parent app (Apps Code)
+ *  - Install SalusThermostatController child app (Apps Code)
+ *  - Configure parent app with gateway IP and EUID
+ *  - Parent app will discover devices and create child apps automatically
+ *  - Test: Use Thermostat Scheduler to change setpoint, verify gateway receives command
+ *  - Test: Change thermostat mode via Hubitat dashboard, verify state updates
  */
 
-/* Id: 3de7b7a */
-/* Date: 2026-09-27 15:55:41 */
-/* Commit: 238 */
-
 #include hubitat.SalusCommon
-
-// Supported thermostat capabilities and attributes
-@Field static final List<String> SUPPORTED_THERMOSTAT_MODES = ["off", "heat"]  // No cool for radiator heating
-@Field static final List<String> SUPPORTED_THERMOSTAT_FAN_MODES = ["auto"]     // Fixed for radiator systems
-@Field static final List<String> SUPPORTED_THERMOSTAT_PRESETS = ["follow_schedule", "permanent_hold", "temporary_hold", "standby", "away"]
 
 metadata {
     definition (
@@ -44,14 +55,14 @@ metadata {
     attribute "temperature", "NUMBER"
     attribute "heatingSetpoint", "NUMBER"
     attribute "coolingSetpoint", "NUMBER"
-    attribute "thermostatMode", "ENUM", SUPPORTED_THERMOSTAT_MODES
-    attribute "thermostatFanMode", "ENUM", SUPPORTED_THERMOSTAT_FAN_MODES
+    attribute "thermostatMode", "ENUM", THERMOSTAT_MODES
+    attribute "thermostatFanMode", "ENUM", THERMOSTAT_FAN_MODES
     attribute "thermostatOperation", "STRING"
     attribute "thermostatOperatingState", "STRING"  // Standard attribute for Thermostat Scheduler
-    attribute "supportedThermostatModes", "LIST", SUPPORTED_THERMOSTAT_MODES
-    attribute "supportedThermostatFanModes", "LIST", SUPPORTED_THERMOSTAT_FAN_MODES
-    attribute "availableThermostatPresets", "LIST", SUPPORTED_THERMOSTAT_PRESETS
-    attribute "presetMode", "ENUM", SUPPORTED_THERMOSTAT_PRESETS
+    attribute "supportedThermostatModes", "LIST", THERMOSTAT_MODES
+    attribute "supportedThermostatFanModes", "LIST", THERMOSTAT_FAN_MODES
+    attribute "availableThermostatPresets", "LIST", THERMOSTAT_PRESETS
+    attribute "presetMode", "ENUM", THERMOSTAT_PRESETS
     attribute "isLocked", "BOOL"
     attribute "gatewayStatus", "STRING"
     
@@ -59,9 +70,9 @@ metadata {
     command "setTemperature", "NUMBER"
     command "setHeatingSetpoint", "NUMBER"
     command "setCoolingSetpoint", "NUMBER"
-    command "setThermostatMode", "ENUM", SUPPORTED_THERMOSTAT_MODES
-    command "setThermostatFanMode", "ENUM", SUPPORTED_THERMOSTAT_FAN_MODES
-    command "setPresetMode", "ENUM", SUPPORTED_THERMOSTAT_PRESETS
+    command "setThermostatMode", "ENUM", THERMOSTAT_MODES
+    command "setThermostatFanMode", "ENUM", THERMOSTAT_FAN_MODES
+    command "setPresetMode", "ENUM", THERMOSTAT_PRESETS
     command "setThermostatLock", "BOOL"
     command "refresh"
     
@@ -159,7 +170,7 @@ def setCoolingSetpoint(Number value) {
  */
 def setThermostatMode(String mode) {
     log.debug "setThermostatMode received: ${mode}"
-    if (SUPPORTED_THERMOSTAT_MODES.contains(mode)) {
+    if (THERMOSTAT_MODES.contains(mode)) {
         state.thermostatMode = mode
         setAttribute("thermostatMode", mode)
         // Update operating state based on mode
@@ -178,7 +189,7 @@ def setThermostatMode(String mode) {
  */
 def setThermostatFanMode(String mode) {
     log.debug "setThermostatFanMode received: ${mode}"
-    if (SUPPORTED_THERMOSTAT_FAN_MODES.contains(mode)) {
+    if (THERMOSTAT_FAN_MODES.contains(mode)) {
         state.thermostatFanMode = mode
         setAttribute("thermostatFanMode", mode)
         createEvent(name: "thermostatFanMode", value: mode, 
@@ -194,7 +205,7 @@ def setThermostatFanMode(String mode) {
  */
 def setPresetMode(String preset) {
     log.debug "setPresetMode received: ${preset}"
-    if (SUPPORTED_THERMOSTAT_PRESETS.contains(preset)) {
+    if (THERMOSTAT_PRESETS.contains(preset)) {
         state.presetMode = preset
         setAttribute("presetMode", preset)
         createEvent(name: "thermostatPresetMode", value: preset, 
@@ -243,9 +254,9 @@ void setThermostatAttributes() {
     setAttribute("thermostatFanMode", state.thermostatFanMode)
     setAttribute("presetMode", state.presetMode)
     setAttribute("isLocked", state.isLocked ?: false)
-    setAttribute("supportedThermostatModes", SUPPORTED_THERMOSTAT_MODES)
-    setAttribute("supportedThermostatFanModes", SUPPORTED_THERMOSTAT_FAN_MODES)
-    setAttribute("availableThermostatPresets", SUPPORTED_THERMOSTAT_PRESETS)
+    setAttribute("supportedThermostatModes", THERMOSTAT_MODES)
+    setAttribute("supportedThermostatFanModes", THERMOSTAT_FAN_MODES)
+    setAttribute("availableThermostatPresets", THERMOSTAT_PRESETS)
     setAttribute("gatewayStatus", state.gatewayStatus ?: "unknown")
     setAttribute("thermostatOperatingState", state.thermostatOperatingState ?: "idle")
     setAttribute("thermostatSetpoint", state.heatingSetpoint)  // Alias for compatibility

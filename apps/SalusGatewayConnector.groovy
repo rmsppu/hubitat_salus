@@ -9,9 +9,9 @@
  *  - CoCoHue - Hue Bridge Integration
  */
 
-/* Id: 6de846e */
-/* Date: 2026-09-27 16:23:50 */
-/* Commit: 239 */
+/* Id: 0ba2dfb */
+/* Date: 2026-09-27 16:26:05 */
+/* Commit: 240 */
 
 #include hubitat.SalusCommon
 
@@ -39,11 +39,42 @@ void installed() {
 }
 
 void updated() {
+    validateSettings()
     initialize()
 }
 
 void deleted() {
     cleanup()
+}
+
+/**
+ * Validate settings on update
+ */
+void validateSettings() {
+    if (settings.gatewayIP) {
+        // Basic IP/hostname validation
+        def ipPattern = /^(\d{1,3}\.){3}\d{1,3}$/
+        def hostnamePattern = /^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/
+        if (!settings.gatewayIP.matches(ipPattern) && !settings.gatewayIP.matches(hostnamePattern)) {
+            log.warn "Gateway IP/hostname format may be invalid: ${settings.gatewayIP}"
+        }
+    }
+    
+    if (settings.euidToken) {
+        // EUID should be 16 hex characters
+        def euidPattern = /^[0-9A-Fa-f]{16}$/
+        if (!settings.euidToken.matches(euidPattern)) {
+            log.warn "EUID token format may be invalid (expected 16 hex chars): ${settings.euidToken}"
+        }
+    }
+    
+    if (settings.pollInterval) {
+        def validIntervals = [1, 2, 5, 10, 15, 30]
+        if (!validIntervals.contains(settings.pollInterval as Integer)) {
+            log.warn "Invalid poll interval: ${settings.pollInterval}, using default"
+            settings.pollInterval = POLL_INTERVAL_MINUTES
+        }
+    }
 }
 
 void initialize() {
@@ -212,6 +243,7 @@ void processGatewayData(Map<String, Object> gatewayData) {
         gatewayData.climate.each { id, data ->
             if (state.deviceMap?.containsKey(id)) {
                 updateClimateChildDevice(id, data)
+                sendEventToChild(id, data, "climate")
             } else {
                 createClimateChildDevice(id, data)
             }
@@ -222,6 +254,7 @@ void processGatewayData(Map<String, Object> gatewayData) {
         gatewayData.switch.each { id, data ->
             if (state.deviceMap?.containsKey(id)) {
                 updateSwitchChildDevice(id, data)
+                sendEventToChild(id, data, "switch")
             } else {
                 createSwitchChildDevice(id, data)
             }
@@ -229,6 +262,21 @@ void processGatewayData(Map<String, Object> gatewayData) {
     }
     
     cleanupRemovedDevices(gatewayData)
+}
+
+/**
+ * Send state update event to child app
+ */
+void sendEventToChild(String deviceId, Map<String, Object> data, String deviceType) {
+    def deviceInfo = state.deviceMap?.get(deviceId)
+    if (deviceInfo && deviceInfo.childAppId) {
+        def child = getChildApp(deviceInfo.childAppId)
+        if (child) {
+            Map<String, Object> eventData = [gatewayStatus: "connected", lastUpdate: new Date().format("yyyy-MM-dd HH:mm:ss")]
+            eventData.putAll(data)
+            child.sendEvent(name: "gatewayUpdate", value: "update", data: eventData)
+        }
+    }
 }
 
 void createClimateChildDevice(String deviceId, Map<String, Object> data) {

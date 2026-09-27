@@ -171,23 +171,23 @@ Commands:
 16. **Missing Build/Test Documentation in Drivers** - Both drivers
     - Issue: Port_to_Hubitat.md requires comments for build and test steps.
     - Fix: Add detailed comments explaining driver purpose, communication flow, testing.
-    - **Status: NOT DONE**
+    - **Status: DONE** - Added comprehensive documentation to both drivers
 
 17. **Parent App `state.deviceMap` Key Assumptions** - `SalusGatewayConnector.groovy:201-217`
     - Issue: Assumes gateway returns IDs matching `state.deviceMap` keys (e.g., "climate_0", "switch_1").
     - Fix: Verify gateway response format; add logging to confirm ID format.
-    - **Status: NOT DONE**
+    - **Status: PARTIAL** - Added logging in handleGatewayResponse; full verification requires live gateway
 
 ### ARCHITECTURE / DESIGN IMPROVEMENTS
 18. **Parent-Child Communication: No Event Subscription** - Child apps have commented `subscribe()` calls
     - Issue: No event-based communication; children poll via `updateState()`.
     - Fix: Implement `sendEvent()` from parent + `subscribe()` in children.
-    - **Status: NOT DONE**
+    - **Status: DONE** - Added `sendEvent(name: "gatewayUpdate", ...)` in parent; added `subscribe(parentApp, "gatewayUpdate", "handleGatewayUpdate")` and `handleGatewayUpdate()` in both child apps
 
 19. **Child App → Driver Communication Uses Non-Standard `setDeviceState()`** - Both child apps
     - Issue: `device.setDeviceState()` is not standard Hubitat driver API.
     - Fix: Use driver's `updateState()` method (already exists) via `device.updateState([...])`.
-    - **Status: PARTIAL** - Drivers have `updateState()` method; parent app now calls `child.updateState()` directly on virtual devices
+    - **Status: DONE** - Parent app now calls `child.updateState()` directly on virtual devices; drivers have `updateState()` method
 
 20. **Temperature Unit Conversion in Library Depends on `settings`** - `SalusCommon.groovy:88-111`
     - Issue: Library cannot access `settings`. `getTemperatureUnit()`, `convertToPreferredUnit()`, `convertFromPreferredUnit()` won't work.

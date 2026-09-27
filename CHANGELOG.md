@@ -32,6 +32,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Created `packageManifest.json`** for Hubitat Package Manager (HPM) compatibility
 - **Child apps now use library constants** - Using `SalusCommon.THERMOSTAT_PRESETS`, `THERMOSTAT_MODES`, `THERMOSTAT_FAN_MODES`
 - **Explicit deviceNetworkId in child device creation** - Using `salus_thermostat_${deviceId}` and `salus_switch_${deviceId}`
+- **Added input validation on parent app settings** - Validates IP/hostname format, EUID format, and poll interval bounds
+- **Added event-based parent-child communication** - Parent sends `gatewayUpdate` events; children subscribe and handle via `handleGatewayUpdate()`
+- **Added comprehensive build/test documentation to drivers** - Both drivers now include communication flow diagrams and test steps
+- **Added logging in handleGatewayResponse** to verify gateway response ID format
+
+### Added
+- Event-based parent-child communication architecture
+- Input validation for gateway configuration settings
 
 ## [0.1.0] - 2026-09-18
 

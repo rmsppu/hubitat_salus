@@ -7,9 +7,9 @@
  *  This child app is created and managed by the SalusGatewayConnector parent app.
  */
 
-/* Id: 3de7b7a */
-/* Date: 2026-09-27 15:55:41 */
-/* Commit: 238 */
+/* Id: 0ba2dfb */
+/* Date: 2026-09-27 16:26:05 */
+/* Commit: 240 */
 
 #include hubitat.SalusCommon
 
@@ -318,15 +318,19 @@ def command(String commandName, Map<String, Object> params) {
 void subscribeToEvents() {
     log.debug "Subscribing to events"
     
-    // Subscribe to parent app status changes if needed
+    // Subscribe to parent app events
     def parentApp = getParentApp()
     if (parentApp) {
-        // Subscribe to gateway status changes from parent
-        // subscribe(parentApp, "gatewayStatus", "gatewayStatusChanged")
+        subscribe(parentApp, "gatewayUpdate", "handleGatewayUpdate")
     }
-    
-    // Subscribe to device events if needed
-    // subscribe(device, "someEvent", "eventHandler")
+}
+
+/**
+ * Handle gateway update event from parent app
+ */
+void handleGatewayUpdate(Map<String, Object> eventData) {
+    log.debug "Received gateway update event: ${eventData}"
+    updateState(eventData)
 }
 
 /**

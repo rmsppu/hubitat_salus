@@ -6,11 +6,30 @@
  *  All control must go through the Salus gateway.
  *  
  *  This device is created and managed by the SalusSwitchController child app.
+ *  
+ *  COMMUNICATION FLOW:
+ *  1. Salus Gateway sends status updates via HTTP response to parent app
+ *  2. Parent app (SalusGatewayConnector) decrypts and processes response
+ *  3. Parent app calls child app (SalusSwitchController) updateState()
+ *  4. Child app calls driver's updateState() to update device attributes
+ *  5. Driver creates events for any changed attributes
+ *  
+ *  CONTROL FLOW (NOT SUPPORTED):
+ *  - Hubitat apps may send on/off commands to this virtual device
+ *  - Driver on()/off() methods log warning and do NOT change state
+ *  - All pump/relay control MUST go through Salus Gateway directly
+ *  - Child app command() method returns success but does not forward to gateway
+ *  
+ *  BUILD AND TEST:
+ *  - Install SalusCommon library first (Libraries Code)
+ *  - Install this driver (Drivers Code)  
+ *  - Install SalusGatewayConnector parent app (Apps Code)
+ *  - Install SalusSwitchController child app (Apps Code)
+ *  - Configure parent app with gateway IP and EUID
+ *  - Parent app will discover devices and create child apps automatically
+ *  - Test: Verify switch state updates when relay zone changes on gateway
+ *  - Test: Send on/off command from Hubitat dashboard - should log warning but not change state
  */
-
-/* Id: 3de7b7a */
-/* Date: 2026-09-27 15:55:41 */
-/* Commit: 238 */
 
 #include hubitat.SalusCommon
 
