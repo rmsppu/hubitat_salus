@@ -12,9 +12,9 @@
  *  - Kasa Hubitat Integration
  */
 
-/* Id: 3de7b7a */
-/* Date: 2026-09-27 15:55:41 */
-/* Commit: 238 */
+/* Id: d8261a2 */
+/* Date: 2026-09-27 16:30:45 */
+/* Commit: 241 */
 
 import groovy.transform.Field
 import java.security.MessageDigest
@@ -27,7 +27,7 @@ library (
     category: "Utilities",
     description: "Common constants and utility functions for Salus devices",
     name: "SalusCommon",
-    namespace: "hubitat",
+    namespace: "Salus_for_Hubitat",
     version: "0.1.0",
     importUrl: "https://raw.githubusercontent.com/rmsppu/hubitat_salus/main/libs/SalusCommon.groovy"
 )
