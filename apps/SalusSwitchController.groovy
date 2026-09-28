@@ -7,9 +7,9 @@
  *  This child app is created and managed by the SalusGatewayConnector parent app.
  */
 
-/* Id: d54bd65 */
-/* Date: 2026-09-27 17:57:31 */
-/* Commit: 244 */
+/* Id: 62462c9 */
+/* Date: 2026-09-28 19:34:12 */
+/* Commit: 249 */
 
 #include Salus_for_Hubitat.SalusCommon
 
@@ -136,7 +136,7 @@ void createOrUpdateSwitchDevice() {
     // Check if we already have a virtual switch device
     String deviceLabel = "${getDeviceName() ?: 'Salus'} Switch"
     String expectedDni = "salus_switch_${getDeviceId()}"
-    DeviceWrapper existingDevice = getChildDevice(expectedDni)
+    def existingDevice = getChildDevice(expectedDni)
     
     if (existingDevice) {
         log.debug "Virtual switch device already exists: ${existingDevice.displayName}"
@@ -208,7 +208,7 @@ void notifyParentOfVirtualDni() {
 /**
  * Update an existing virtual switch device
  */
-void updateVirtualSwitchDevice(DeviceWrapper device) {
+void updateVirtualSwitchDevice(def device) {
     log.debug "Updating virtual switch device: ${device.displayName}"
     
     // Update any changed properties
@@ -221,7 +221,7 @@ void updateVirtualSwitchDevice(DeviceWrapper device) {
 void initializeVirtualSwitchDevice(String deviceId) {
     log.debug "Initializing virtual switch device state: ${deviceId}"
     
-    DeviceWrapper device = getChildDevice(deviceId)
+    def device = getChildDevice(deviceId)
     if (device) {
         // In a real implementation, we would get the current state from the parent app
         // or gateway and set the initial device attributes
@@ -245,7 +245,7 @@ void updateVirtualSwitchDeviceState(Map<String, Object> stateData) {
         return
     }
     
-    DeviceWrapper switchDevice = getChildDevice(dni)
+    def switchDevice = getChildDevice(dni)
     
     if (switchDevice) {
         log.debug "Updating state for device ${switchDevice.deviceNetworkId}"

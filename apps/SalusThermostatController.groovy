@@ -7,9 +7,9 @@
  *  This child app is created and managed by the SalusGatewayConnector parent app.
  */
 
-/* Id: d54bd65 */
-/* Date: 2026-09-27 17:57:31 */
-/* Commit: 244 */
+/* Id: 62462c9 */
+/* Date: 2026-09-28 19:34:12 */
+/* Commit: 249 */
 
 #include Salus_for_Hubitat.SalusCommon
 
@@ -135,7 +135,7 @@ void createOrUpdateThermostatDevice() {
     // Check if we already have a virtual thermostat device
     String deviceLabel = "${getDeviceName() ?: 'Salus'} Thermostat"
     String expectedDni = "salus_thermostat_${getDeviceId()}"
-    DeviceWrapper existingDevice = getChildDevice(expectedDni)
+    def existingDevice = getChildDevice(expectedDni)
     
     if (existingDevice) {
         log.debug "Virtual thermostat device already exists: ${existingDevice.displayName}"
@@ -207,7 +207,7 @@ void notifyParentOfVirtualDni() {
 /**
  * Update an existing virtual thermostat device
  */
-void updateVirtualThermostatDevice(DeviceWrapper device) {
+void updateVirtualThermostatDevice(def device) {
     log.debug "Updating virtual thermostat device: ${device.displayName}"
     
     // Update any changed properties
@@ -220,7 +220,7 @@ void updateVirtualThermostatDevice(DeviceWrapper device) {
 void initializeVirtualThermostatDevice(String deviceId) {
     log.debug "Initializing virtual thermostat device state: ${deviceId}"
     
-    DeviceWrapper device = getChildDevice(deviceId)
+    def device = getChildDevice(deviceId)
     if (device) {
         // In a real implementation, we would get the current state from the parent app
         // or gateway and set the initial device attributes
@@ -249,7 +249,7 @@ void updateVirtualThermostatDeviceState(Map<String, Object> stateData) {
         return
     }
     
-    DeviceWrapper thermostatDevice = getChildDevice(dni)
+    def thermostatDevice = getChildDevice(dni)
     
     if (thermostatDevice) {
         log.debug "Updating state for device ${thermostatDevice.deviceNetworkId}"
