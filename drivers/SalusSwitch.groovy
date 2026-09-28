@@ -34,40 +34,31 @@
 #include Salus_for_Hubitat.SalusCommon
 
 metadata {
-    definition (
-        name: "Salus Switch (Status Only)",
-        namespace: "Salus_for_Hubitat",
-        author: "rmsppu@github.com",
-        description: "Virtual switch device for displaying Salus relay zone status (control via gateway only)",
-        // The Vocab key allows this device to work with voice assistants
-        vocab: {
-            // Standard switch vocabulary
+    definition(name: "Salus Switch (Status Only)", namespace: "Salus_for_Hubitat", author: "rmsppu@github.com", importUrl: "https://raw.githubusercontent.com/rmsppu/hubitat_salus/main/drivers/SalusSwitch.groovy") {
+        // Switch capability (read-only/status only)
+        capability "Switch"
+        
+        // Additional capabilities
+        capability "Actuator"                      // For command handling (though we'll reject control commands)
+        capability "Refresh"                       // For manual refresh
+        capability "Sensor"                        // Generic sensor capability
+        
+        // Attributes
+        attribute "switch", "ENUM", ["on", "off"]
+        attribute "deviceName", "STRING"
+        attribute "deviceModel", "STRING"
+        attribute "gatewayStatus", "STRING"
+        
+        // Commands
+        command "on"
+        command "off"
+        command "refresh"
+        
+        // Configuration
+        preferences {
+            input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: false
+            input name: "txtEnable", type: "bool", title: "Enable descriptionText logging", defaultValue: false
         }
-    )
-    
-    // Switch capability (read-only/status only)
-    capability "Switch"
-    
-    // Additional capabilities
-    capability "Actuator"                      // For command handling (though we'll reject control commands)
-    capability "Refresh"                       // For manual refresh
-    capability "Sensor"                        // Generic sensor capability
-    
-    // Attributes
-    attribute "switch", "ENUM", ["on", "off"]
-    attribute "deviceName", "STRING"
-    attribute "deviceModel", "STRING"
-    attribute "gatewayStatus", "STRING"
-    
-    // Commands
-    command "on"
-    command "off"
-    command "refresh"
-    
-    // Configuration
-    preferences {
-        input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: false
-        input name: "txtEnable", type: "bool", title: "Enable descriptionText logging", defaultValue: false
     }
 }
 

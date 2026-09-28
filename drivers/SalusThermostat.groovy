@@ -30,60 +30,51 @@
 #include Salus_for_Hubitat.SalusCommon
 
 metadata {
-    definition (
-        name: "Salus Thermostat",
-        namespace: "Salus_for_Hubitat",
-        author: "rmsppu@github.com",
-        description: "Virtual thermostat device for Salus heating systems",
-        // The Vocab key allows this device to work with voice assistants
-        vocab: {
-            // Standard thermostat vocabulary
+    definition(name: "Salus Thermostat", namespace: "Salus_for_Hubitat", author: "rmsppu@github.com", importUrl: "https://raw.githubusercontent.com/rmsppu/hubitat_salus/main/drivers/SalusThermostat.groovy") {
+        // Thermostat capability
+        capability "Thermostat"
+        
+        // Additional capabilities that may be useful
+        capability "Relative Humidity Measurement"  // If the thermostat reports humidity
+        capability "Battery"                       // If the thermostat reports battery level
+        capability "Actuator"                      // For command handling
+        capability "Refresh"                       // For manual refresh
+        capability "Sensor"                        // Generic sensor capability
+        
+        // Attributes
+        attribute "temperature", "NUMBER"
+        attribute "heatingSetpoint", "NUMBER"
+        attribute "coolingSetpoint", "NUMBER"
+        attribute "thermostatMode", "ENUM", THERMOSTAT_MODES
+        attribute "thermostatFanMode", "ENUM", THERMOSTAT_FAN_MODES
+        attribute "thermostatOperation", "STRING"
+        attribute "thermostatOperatingState", "STRING"  // Standard attribute for Thermostat Scheduler
+        attribute "supportedThermostatModes", "LIST", THERMOSTAT_MODES
+        attribute "supportedThermostatFanModes", "LIST", THERMOSTAT_FAN_MODES
+        attribute "availableThermostatPresets", "LIST", THERMOSTAT_PRESETS
+        attribute "presetMode", "ENUM", THERMOSTAT_PRESETS
+        attribute "isLocked", "BOOL"
+        attribute "gatewayStatus", "STRING"
+        
+        // Commands
+        command "setTemperature", "NUMBER"
+        command "setHeatingSetpoint", "NUMBER"
+        command "setCoolingSetpoint", "NUMBER"
+        command "setThermostatMode", "ENUM", THERMOSTAT_MODES
+        command "setThermostatFanMode", "ENUM", THERMOSTAT_FAN_MODES
+        command "setPresetMode", "ENUM", THERMOSTAT_PRESETS
+        command "setThermostatLock", "BOOL"
+        command "refresh"
+        
+        // Optional attributes for extended functionality
+        attribute "currentHumidity", "NUMBER"
+        attribute "battery", "NUMBER"
+        
+        // Configuration
+        preferences {
+            input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: false
+            input name: "txtEnable", type: "bool", title: "Enable descriptionText logging", defaultValue: false
         }
-    )
-    
-    // Thermostat capability
-    capability "Thermostat"
-    
-    // Additional capabilities that may be useful
-    capability "Relative Humidity Measurement"  // If the thermostat reports humidity
-    capability "Battery"                       // If the thermostat reports battery level
-    capability "Actuator"                      // For command handling
-    capability "Refresh"                       // For manual refresh
-    capability "Sensor"                        // Generic sensor capability
-    
-    // Attributes
-    attribute "temperature", "NUMBER"
-    attribute "heatingSetpoint", "NUMBER"
-    attribute "coolingSetpoint", "NUMBER"
-    attribute "thermostatMode", "ENUM", THERMOSTAT_MODES
-    attribute "thermostatFanMode", "ENUM", THERMOSTAT_FAN_MODES
-    attribute "thermostatOperation", "STRING"
-    attribute "thermostatOperatingState", "STRING"  // Standard attribute for Thermostat Scheduler
-    attribute "supportedThermostatModes", "LIST", THERMOSTAT_MODES
-    attribute "supportedThermostatFanModes", "LIST", THERMOSTAT_FAN_MODES
-    attribute "availableThermostatPresets", "LIST", THERMOSTAT_PRESETS
-    attribute "presetMode", "ENUM", THERMOSTAT_PRESETS
-    attribute "isLocked", "BOOL"
-    attribute "gatewayStatus", "STRING"
-    
-    // Commands
-    command "setTemperature", "NUMBER"
-    command "setHeatingSetpoint", "NUMBER"
-    command "setCoolingSetpoint", "NUMBER"
-    command "setThermostatMode", "ENUM", THERMOSTAT_MODES
-    command "setThermostatFanMode", "ENUM", THERMOSTAT_FAN_MODES
-    command "setPresetMode", "ENUM", THERMOSTAT_PRESETS
-    command "setThermostatLock", "BOOL"
-    command "refresh"
-    
-    // Optional attributes for extended functionality
-    attribute "currentHumidity", "NUMBER"
-    attribute "battery", "NUMBER"
-    
-    // Configuration
-    preferences {
-        input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: false
-        input name: "txtEnable", type: "bool", title: "Enable descriptionText logging", defaultValue: false
     }
 }
 
@@ -257,7 +248,7 @@ void setThermostatAttributes() {
     setAttribute("supportedThermostatModes", THERMOSTAT_MODES)
     setAttribute("supportedThermostatFanModes", THERMOSTAT_FAN_MODES)
     setAttribute("availableThermostatPresets", THERMOSTAT_PRESETS)
-    setAttribute("gatewayStatus", state.gatewayStatus ?: "unknown")
+    attribute("gatewayStatus", state.gatewayStatus ?: "unknown")
     setAttribute("thermostatOperatingState", state.thermostatOperatingState ?: "idle")
     setAttribute("thermostatSetpoint", state.heatingSetpoint)  // Alias for compatibility
     
