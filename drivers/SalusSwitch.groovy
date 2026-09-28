@@ -31,13 +31,13 @@
  *  - Test: Send on/off command from Hubitat dashboard - should log warning but not change state
  */
 
-#include hubitat.SalusCommon
+#include Salus_for_Hubitat.SalusCommon
 
 metadata {
     definition (
         name: "Salus Switch (Status Only)",
         namespace: "Salus_for_Hubitat",
-        author: "rmsppu@githum.com",
+        author: "rmsppu@github.com",
         description: "Virtual switch device for displaying Salus relay zone status (control via gateway only)",
         // The Vocab key allows this device to work with voice assistants
         vocab: {

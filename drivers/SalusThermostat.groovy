@@ -27,13 +27,13 @@
  *  - Test: Change thermostat mode via Hubitat dashboard, verify state updates
  */
 
-#include hubitat.SalusCommon
+#include Salus_for_Hubitat.SalusCommon
 
 metadata {
     definition (
         name: "Salus Thermostat",
         namespace: "Salus_for_Hubitat",
-        author: "rmsppu@githum.com",
+        author: "rmsppu@github.com",
         description: "Virtual thermostat device for Salus heating systems",
         // The Vocab key allows this device to work with voice assistants
         vocab: {

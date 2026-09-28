@@ -7,18 +7,18 @@
  *  This child app is created and managed by the SalusGatewayConnector parent app.
  */
 
-/* Id: b3a5389 */
-/* Date: 2026-09-27 16:53:47 */
-/* Commit: 242 */
+/* Id: d54bd65 */
+/* Date: 2026-09-27 17:57:31 */
+/* Commit: 244 */
 
-#include hubitat.SalusCommon
+#include Salus_for_Hubitat.SalusCommon
 
 import groovy.transform.Field
 
 definition (
     name: "Salus Thermostat Controller",
     namespace: "Salus_for_Hubitat",
-    author: "rmsppu@githum.com",
+    author: "rmsppu@github.com",
     description: "Controls a Salus thermostat and creates a virtual thermostat device",
     category: "Convenience"
 )
