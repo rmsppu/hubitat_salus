@@ -11,9 +11,9 @@
 *  - Kasa Hubitat Integration
 */ 
 
-/* Id: d54bd65 */
-/* Date: 2026-09-27 17:57:31 */
-/* Commit: 244 */
+/* Id: a7f9bc9 */
+/* Date: 2026-09-28 14:03:56 */
+/* Commit: 245 */
 
 import groovy.transform.Field
 import java.security.MessageDigest
@@ -131,8 +131,13 @@ static byte[] generateEncryptionKey(String euid) {
     MessageDigest md = MessageDigest.getInstance("MD5")
     byte[] keyMaterial = md.digest("Salus-${euid.toLowerCase()}".getBytes())
     byte[] key = new byte[32]
-    System.arraycopy(keyMaterial, 0, key, 0, 16)
-    System.arraycopy(new byte[16], 0, key, 16, 16)
+    
+    // Copy first 16 bytes from keyMaterial (MD5 output)
+    for (int i = 0; i < 16; i++) {
+        key[i] = keyMaterial[i]
+    }
+    // Remaining 16 bytes are already zero (default for new byte[32])
+    
     return key
 }
 
