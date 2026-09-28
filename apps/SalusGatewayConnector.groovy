@@ -9,9 +9,9 @@
  *  - CoCoHue - Hue Bridge Integration
  */
 
-/* Id: d54bd65 */
-/* Date: 2026-09-27 17:57:31 */
-/* Commit: 244 */
+/* Id: 021e44f */
+/* Date: 2026-09-28 19:22:24 */
+/* Commit: 248 */
 
 #include Salus_for_Hubitat.SalusCommon
 
@@ -185,7 +185,7 @@ void handleGatewayResponse(response) {
     }
 }
 
-void connectToGateway() {
+Boolean connectToGateway() {
     if (!isConfigured()) {
         setGatewayStatus("not configured")
         return false
