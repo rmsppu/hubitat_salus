@@ -57,13 +57,13 @@ metadata {
         attribute "gatewayStatus", "STRING"
         
         // Commands
-        command "setTemperature", "NUMBER"
-        command "setHeatingSetpoint", "NUMBER"
-        command "setCoolingSetpoint", "NUMBER"
-        command "setThermostatMode", "ENUM", THERMOSTAT_MODES
-        command "setThermostatFanMode", "ENUM", THERMOSTAT_FAN_MODES
-        command "setPresetMode", "ENUM", THERMOSTAT_PRESETS
-        command "setThermostatLock", "BOOL"
+        command "setTemperature"
+        command "setHeatingSetpoint"
+        command "setCoolingSetpoint"
+        command "setThermostatMode"
+        command "setThermostatFanMode"
+        command "setPresetMode"
+        command "setThermostatLock"
         command "refresh"
         
         // Optional attributes for extended functionality
