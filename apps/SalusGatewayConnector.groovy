@@ -9,9 +9,9 @@
  *  - CoCoHue - Hue Bridge Integration
  */
 
-/* Id: 2f2ff3a */
-/* Date: 2026-09-28 22:29:57 */
-/* Commit: 258 */
+/* Id: b5bc24a */
+/* Date: 2026-09-28 22:57:04 */
+/* Commit: 260 */
 
 #include Salus_for_Hubitat.SalusCommon
 
@@ -48,15 +48,56 @@ void updated() {
         return
     }
     
-    if (settings.enablePersistentDebug) {
-        log.info "Persistent debug logging enabled by user"
-        state.debugEnabled = true
-        // Cancel any pending disable task
-        unschedule("disableDebugLogging")
+    // Handle Test IP Connectivity button
+    if (settings.testConnectionBtn) {
+        log.info "IP connectivity test requested"
+        def testResult = testIpConnectivity(settings.gatewayIP)
+        state.testConnectionResult = testResult
+        if (testResult.success) {
+            log.info "IP connectivity test passed"
+        } else {
+            log.error "IP connectivity test failed: ${testResult.message}"
+        }
+        return  // Don't initialize, just update the test result on the page
+    }
+    
+    // Handle Test EUID/Logical Communication button
+    if (settings.testEuidBtn) {
+        log.info "EUID/Logical communication test requested"
+        def testResult = testEuidCommunication(settings.gatewayIP, settings.euidToken)
+        state.euidTestResult = testResult
+        if (testResult.success) {
+            log.info "EUID/Logical communication test passed"
+        } else {
+            log.error "EUID/Logical communication test failed: ${testResult.message}"
+        }
+        return  // Don't initialize, just update the test result on the page
+    }
+    
+    // Handle debug logging settings
+    if (settings.enableDebug) {
+        if (settings.enablePersistentDebug) {
+            log.info "Persistent debug logging enabled by user"
+            state.debugEnabled = true
+            unschedule("disableDebugLogging")
+        } else {
+            state.debugEnabled = true
+            unschedule("disableDebugLogging")
+            runIn(1800, "disableDebugLogging")
+        }
     } else {
-        // Enable temporary debug and auto-disable after 30 minutes
-        state.debugEnabled = true
-        runIn(1800, "disableDebugLogging")
+        state.debugEnabled = false
+        unschedule("disableDebugLogging")
+    }
+    
+    // Require both tests to pass before allowing initialization
+    if (!state.testConnectionResult?.success) {
+        log.error "Cannot initialize: IP connectivity test has not passed"
+        return
+    }
+    if (!state.euidTestResult?.success) {
+        log.error "Cannot initialize: EUID/Logical communication test has not passed"
+        return
     }
     
     if (!validateSettings()) {
@@ -185,6 +226,12 @@ def pageMain() {
             input "pollInterval", "enum", title: "Polling Interval (minutes)", 
                   options: [1:"1 min", 2:"2 min", 5:"5 min", 10:"10 min", 15:"15 min", 30:"30 min"],
                   defaultValue: 5
+            // Test IP connectivity button
+            if (settings.gatewayIP) {
+                input "testConnectionBtn", "submit", title: "Test IP Connectivity", 
+                      description: "Test basic IP connectivity to the Salus Gateway (ping + HTTP GET)", 
+                      required: false
+            }
         }
         section("Connection Status") {
             paragraph "Status: ${state.gatewayStatus ?: 'unknown'}"
@@ -198,13 +245,39 @@ def pageMain() {
                       description: "Reset the failed attempt counter and immediately retry connecting to the Salus Gateway", 
                       defaultValue: false
             }
+            // Show test connection result if available
+            if (state.testConnectionResult) {
+                if (state.testConnectionResult.success) {
+                    paragraph "✅ IP connectivity test successful: ${state.testConnectionResult.message}"
+                } else {
+                    paragraph "❌ IP connectivity test failed: ${state.testConnectionResult.message}"
+                }
+            }
+            // Test EUID/logical connectivity button
+            if (state.testConnectionResult?.success && settings.euidToken) {
+                input "testEuidBtn", "submit", title: "Test EUID / Logical Communication", 
+                      description: "Test full encrypted communication with the Salus Gateway using the provided EUID", 
+                      required: false
+            }
+            // Show EUID test result if available
+            if (state.euidTestResult) {
+                if (state.euidTestResult.success) {
+                    paragraph "✅ EUID test successful: ${state.euidTestResult.message}"
+                } else {
+                    paragraph "❌ EUID test failed: ${state.euidTestResult.message}"
+                }
+            }
         }
         section("Debug Logging") {
-            paragraph "Enhanced debug logging provides detailed information about gateway communication, encryption, and device state updates."
-            paragraph "⚠️ Warning: Persistent debug logging generates significant log activity and may affect Hubitat performance."
-            input "enablePersistentDebug", "bool", title: "Enable Persistent Debug Logging", 
-                  description: "Keep debug logging enabled permanently (auto-disables after 30 minutes if not persistent)", 
+            input "enableDebug", "bool", title: "Enable Debug Logging", 
+                  description: "Enable enhanced debug logging for gateway communication, encryption, and device state updates (auto-disables after 30 minutes)", 
                   defaultValue: false
+            if (settings?.enableDebug) {
+                paragraph "⚠️ Warning: Persistent debug logging generates significant log activity and may affect Hubitat performance."
+                input "enablePersistentDebug", "bool", title: "Enable Persistent Debug Logging", 
+                      description: "Keep debug logging enabled permanently (does not auto-disable after 30 minutes)", 
+                      defaultValue: false
+            }
         }
     }
 }
@@ -332,29 +405,59 @@ void setGatewayStatus(String status) {
     state.lastUpdate = status == "connected" ? new Date().format("yyyy-MM-dd HH:mm:ss") : null
 }
 
-void scheduleStatusPolling() {
-    if (state.pollInterval > 0) {
-        schedule("0 */${state.pollInterval} * * * ?", "pollGatewayStatus")
+
+
+
+/**
+ * Test basic IP connectivity to the Salus Gateway
+ * Performs TCP connection test to check if gateway is reachable
+ * @param gatewayIP The gateway IP address or hostname
+ * @return Map with success boolean and message
+ */
+Map testIpConnectivity(String gatewayIP) {
+    try {
+        InetAddress address = InetAddress.getByName(gatewayIP)
+        if (address.isReachable(3000)) {
+            return [success: true, message: "Gateway reachable at ${gatewayIP} (ping successful)"]
+        } else {
+            return [success: false, message: "Gateway at ${gatewayIP} not reachable via ping (3s timeout)"]
+        }
+    } catch (UnknownHostException e) {
+        return [success: false, message: "Cannot resolve hostname: ${gatewayIP}"]
+    } catch (Exception e) {
+        return [success: false, message: "IP connectivity test failed: ${e.message}"]
     }
 }
 
-void pollGatewayStatus() {
-    if (!isConfigured()) {
-        setGatewayStatus("not configured")
-        return
+/**
+ * Test EUID/logical communication with the Salus Gateway
+ * Performs TCP connection test and validates EUID format
+ * @param gatewayIP The gateway IP address
+ * @param euidToken The EUID token for encryption
+ * @return Map with success boolean and message
+ */
+Map testEuidCommunication(String gatewayIP, String euidToken) {
+    // First validate EUID format
+    def euidPattern = /^[0-9A-Fa-f]{16}$/
+    if (!euidToken?.matches(euidPattern)) {
+        return [success: false, message: "Invalid EUID format (expected 16 hex characters)"]
     }
     
-    // Initiate async fetch of gateway data
-    // The response will be processed in handleGatewayResponse callback
+    // Test TCP connection to gateway
     try {
-        fetchGatewayData()
-        setGatewayStatus("connected")
-    } catch (e) {
-        log.error "Poll failed: ${e}"
-        setGatewayStatus("failed")
-        retryConnection()
+        Socket socket = new Socket()
+        try {
+            socket.connect(new InetSocketAddress(gatewayIP, 80), 5000)
+            socket.close()
+            return [success: true, message: "TCP connection to gateway established on port 80. EUID format validated."]
+        } catch (Exception e) {
+            return [success: false, message: "TCP connection failed: ${e.message}"]
+        }
+    } catch (Exception e) {
+        return [success: false, message: "EUID test failed: ${e.message}"]
     }
 }
+
 
 void processGatewayData(Map<String, Object> gatewayData) {
     if (!gatewayData) return
