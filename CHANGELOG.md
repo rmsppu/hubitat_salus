@@ -36,10 +36,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Added event-based parent-child communication** - Parent sends `gatewayUpdate` events; children subscribe and handle via `handleGatewayUpdate()`
 - **Added comprehensive build/test documentation to drivers** - Both drivers now include communication flow diagrams and test steps
 - **Added logging in handleGatewayResponse** to verify gateway response ID format
+- **Fixed `System.arraycopy()` in SalusCommon library** - Replaced with manual loop for Hubitat compatibility
+- **Fixed Hubitat driver metadata structure** - Moved all capabilities, attributes, commands, and preferences inside the `definition` closure within `metadata` block
+- **Fixed Hubitat driver command syntax** - Removed type parameters from command declarations (e.g., `command "setTemperature"` instead of `command "setTemperature", "NUMBER"`)
+- **Fixed `DeviceWrapper` type errors in child apps** - Removed explicit `DeviceWrapper` type declarations; Hubitat child apps don't have access to this class
+- **Fixed BigDecimal issue in driver initialization** - Changed decimal literals to double (`22.0d`, `20.0d`) to avoid type mismatch with `setAttribute()`
+- **Fixed `setAttribute()` typo** - Corrected `attribute()` to `setAttribute()` for gatewayStatus
+- **Fixed primitive double conversion for `setAttribute()`** - Hubitat's `setAttribute()` requires primitive `double`, not `java.lang.Double`; added `toPrimitiveDouble()` helper method using `.doubleValue()` for all numeric `setAttribute()` calls in SalusThermostat driver
 
 ### Added
 - Event-based parent-child communication architecture
 - Input validation for gateway configuration settings
+- Hubitat Package Manager (HPM) compatibility via `packageManifest.json`
+- Comprehensive build/test documentation in drivers
 
 ## [0.1.0] - 2026-09-18
 
