@@ -9,12 +9,13 @@
  *  - CoCoHue - Hue Bridge Integration
  */
 
-/* Id: c032884 */
-/* Date: 2026-09-28 21:16:07 */
-/* Commit: 257 */
+/* Id: 2f2ff3a */
+/* Date: 2026-09-28 22:29:57 */
+/* Commit: 258 */
 
 #include Salus_for_Hubitat.SalusCommon
 
+import groovy.transform.Field
 import groovy.json.JsonSlurper
 
 @Field static final Integer POLL_INTERVAL_MINUTES = 5
@@ -118,7 +119,9 @@ void initialize() {
     if (!state.gatewayIP) state.gatewayIP = ""
     if (!state.euidToken) state.euidToken = ""
     if (!state.pollInterval) state.pollInterval = POLL_INTERVAL_MINUTES
-    if (!state.deviceMap) state.deviceMap = [:]
+    if (!state.deviceMap) {
+        state.deviceMap = new HashMap()
+    }
     // deviceMap structure: [deviceId: [childAppId: "...", virtualDni: "..."]]
     // Reset failure tracking on re-initialization
     state.failedConnectionAttempts = 0
@@ -277,7 +280,7 @@ void handleGatewayResponse(response) {
         
     } catch (Exception e) {
         log.error "Error processing gateway response: ${e.message}"
-        log.debug "Response data (first 200 chars): ${response.data?.encodeBase64()?.[0..200] ?: 'empty'}"
+        log.debug "Response data (first 200 chars): ${response.data?.encodeBase64()?.getAt(0..200) ?: 'empty'}"
         setGatewayStatus("data_error")
         scheduleRetryPoll()
     }
