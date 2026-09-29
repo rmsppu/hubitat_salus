@@ -124,8 +124,8 @@ def cleanup() {
 def setTemperature(Number value) {
     log.debug "setTemperature received: ${value}"
     state.heatingSetpoint = value
-    setAttribute("heatingSetpoint", value)
-    setAttribute("thermostatSetpoint", value)  // Alias for compatibility
+    setAttribute("heatingSetpoint", (double)value)
+    setAttribute("thermostatSetpoint", (double)value)  // Alias for compatibility
     createEvent(name: "thermostatSetpoint", value: value, 
             descriptionText: "Heating setpoint changed to ${value}°C",
             isStateChange: true)
@@ -137,8 +137,8 @@ def setTemperature(Number value) {
 def setHeatingSetpoint(Number value) {
     log.debug "setHeatingSetpoint received: ${value}"
     state.heatingSetpoint = value
-    setAttribute("heatingSetpoint", value)
-    setAttribute("thermostatSetpoint", value)  // Alias for compatibility
+    setAttribute("heatingSetpoint", (double)value)
+    setAttribute("thermostatSetpoint", (double)value)  // Alias for compatibility
     createEvent(name: "thermostatSetpoint", value: value, 
             descriptionText: "Heating setpoint changed to ${value}°C",
             isStateChange: true)
@@ -150,7 +150,7 @@ def setHeatingSetpoint(Number value) {
 def setCoolingSetpoint(Number value) {
     log.warn "Cooling setpoint not supported for radiator heating"
     state.coolingSetpoint = value
-    setAttribute("coolingSetpoint", value)
+    setAttribute("coolingSetpoint", (double)value)
     createEvent(name: "thermostatCoolingSetpoint", value: value, 
             descriptionText: "Cooling setpoint changed to ${value}°C",
             isStateChange: true)
@@ -238,9 +238,9 @@ def refresh() {
 void setThermostatAttributes() {
     log.debug "Setting thermostat attributes"
     
-    setAttribute("temperature", state.temperature as double)
-    setAttribute("heatingSetpoint", state.heatingSetpoint as double)
-    setAttribute("coolingSetpoint", (state.coolingSetpoint ?: 0) as double)  // Default if not set
+    setAttribute("temperature", (double)state.temperature)
+    setAttribute("heatingSetpoint", (double)state.heatingSetpoint)
+    setAttribute("coolingSetpoint", (double)(state.coolingSetpoint ?: 0))  // Default if not set
     setAttribute("thermostatMode", state.thermostatMode)
     setAttribute("thermostatFanMode", state.thermostatFanMode)
     setAttribute("presetMode", state.presetMode)
@@ -250,7 +250,7 @@ void setThermostatAttributes() {
     setAttribute("availableThermostatPresets", THERMOSTAT_PRESETS)
     setAttribute("gatewayStatus", state.gatewayStatus ?: "unknown")
     setAttribute("thermostatOperatingState", state.thermostatOperatingState ?: "idle")
-    setAttribute("thermostatSetpoint", state.heatingSetpoint as double)  // Alias for compatibility
+    setAttribute("thermostatSetpoint", (double)state.heatingSetpoint)  // Alias for compatibility
     
     // Create events for changed attributes
     createEvent(name: "temperature", value: state.temperature, 
