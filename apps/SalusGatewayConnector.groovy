@@ -9,9 +9,9 @@
  *  - CoCoHue - Hue Bridge Integration
  */
 
-/* Id: b9c8e88 */
-/* Date: 2026-09-28 23:24:07 */
-/* Commit: 262 */
+/* Id: 5ecb7d1 */
+/* Date: 2026-09-28 23:36:28 */
+/* Commit: 263 */
 
 #include Salus_for_Hubitat.SalusCommon
 
@@ -51,27 +51,15 @@ void updated() {
     // Handle Test IP Connectivity button
     if (settings.testConnectionBtn) {
         log.info "IP connectivity test requested"
-        def testResult = testIpConnectivity(settings.gatewayIP)
-        state.testConnectionResult = testResult
-        if (testResult.success) {
-            log.info "IP connectivity test passed"
-        } else {
-            log.error "IP connectivity test failed: ${testResult.message}"
-        }
-        return  // Don't initialize, just update the test result on the page
+        testIpConnectivity(settings.gatewayIP)
+        return  // Don't initialize, async callback will update page
     }
     
     // Handle Test EUID/Logical Communication button
     if (settings.testEuidBtn) {
         log.info "EUID/Logical communication test requested"
-        def testResult = testEuidCommunication(settings.gatewayIP, settings.euidToken)
-        state.euidTestResult = testResult
-        if (testResult.success) {
-            log.info "EUID/Logical communication test passed"
-        } else {
-            log.error "EUID/Logical communication test failed: ${testResult.message}"
-        }
-        return  // Don't initialize, just update the test result on the page
+        testEuidCommunication(settings.gatewayIP, settings.euidToken)
+        return  // Don't initialize, async callback will update page
     }
     
     // Handle debug logging settings
@@ -410,52 +398,91 @@ void setGatewayStatus(String status) {
 
 /**
  * Test basic IP connectivity to the Salus Gateway
- * Performs TCP connection test to check if gateway is reachable
+ * Performs HTTP GET to check if gateway is reachable
  * @param gatewayIP The gateway IP address or hostname
- * @return Map with success boolean and message
+ * @return void (async - result via callback)
  */
-Map testIpConnectivity(String gatewayIP) {
-    try {
-        def address = InetAddress.getByName(gatewayIP)
-        if (address.isReachable(3000)) {
-            return [success: true, message: "Gateway reachable at ${gatewayIP} (ping successful)"]
-        } else {
-            return [success: false, message: "Gateway at ${gatewayIP} not reachable via ping (3s timeout)"]
-        }
-    } catch (UnknownHostException e) {
-        return [success: false, message: "Cannot resolve hostname: ${gatewayIP}"]
-    } catch (Exception e) {
-        return [success: false, message: "IP connectivity test failed: ${e.message}"]
+void testIpConnectivity(String gatewayIP) {
+    // Initiate async HTTP GET to gateway root
+    httpGet([
+        uri: gatewayIP, port: 80, path: "/",
+        timeout: 5
+    ], "ipConnectivityResponseHandler")
+}
+
+/**
+ * Handle IP connectivity test response
+ */
+void ipConnectivityResponseHandler(response) {
+    Map result
+    if (response.status < 0) {
+        result = [success: false, message: "Network error: ${response.errorMessage ?: 'Unknown network error'}"]
+    } else if (response.status == 200) {
+        result = [success: true, message: "Gateway reachable at ${state.gatewayIP} (HTTP GET successful)"]
+    } else {
+        result = [success: false, message: "Gateway returned HTTP ${response.status}"]
     }
+    
+    state.testConnectionResult = result
+    // Refresh the page to show results
+    updated()
 }
 
 /**
  * Test EUID/logical communication with the Salus Gateway
- * Performs TCP connection test and validates EUID format
+ * Performs encrypted request/response cycle
  * @param gatewayIP The gateway IP address
  * @param euidToken The EUID token for encryption
- * @return Map with success boolean and message
+ * @return void (async - result via callback)
  */
-Map testEuidCommunication(String gatewayIP, String euidToken) {
+void testEuidCommunication(String gatewayIP, String euidToken) {
     // First validate EUID format
     def euidPattern = /^[0-9A-Fa-f]{16}$/
     if (!euidToken?.matches(euidPattern)) {
-        return [success: false, message: "Invalid EUID format (expected 16 hex characters)"]
+        state.euidTestResult = [success: false, message: "Invalid EUID format (expected 16 hex characters)"]
+        updated()
+        return
     }
     
-    // Test TCP connection to gateway
-    try {
-        def socket = new Socket()
+    // Send encrypted readall request
+    String requestBody = '{"requestAttr": "readall"}'
+    byte[] encrypted = encryptPayload(requestBody, euidToken)
+    
+    // Use async HTTP POST with callback
+    httpPost([
+        uri: gatewayIP, port: 80, path: "/deviceid/read",
+        contentType: "application/json", body: encrypted,
+        headers: ["content-type":"application/json"], timeout: 10
+    ], "euidTestResponseHandler")
+}
+
+/**
+ * Handle EUID test response
+ */
+void euidTestResponseHandler(response) {
+    Map result
+    if (response.status < 0) {
+        result = [success: false, message: "Network error: ${response.errorMessage ?: 'Unknown network error'}"]
+    } else if (response.status == 200) {
         try {
-            socket.connect(new InetSocketAddress(gatewayIP, 80), 5000)
-            socket.close()
-            return [success: true, message: "TCP connection to gateway established on port 80. EUID format validated."]
+            // Try to decrypt and parse response
+            String decryptedData = decryptPayload(response.data, state.euidToken)
+            def parsedData = new JsonSlurper().parseText(decryptedData)
+            if (parsedData && parsedData instanceof Map) {
+                result = [success: true, message: "EUID test successful - encrypted communication working"]
+            } else {
+                result = [success: false, message: "Gateway responded but returned invalid data format"]
+            }
         } catch (Exception e) {
-            return [success: false, message: "TCP connection failed: ${e.message}"]
+            result = [success: false, message: "EUID test failed - decryption/parsing error: ${e.message}"]
         }
-    } catch (Exception e) {
-        return [success: false, message: "EUID test failed: ${e.message}"]
+    } else {
+        result = [success: false, message: "Gateway returned HTTP ${response.status}"]
     }
+    
+    state.euidTestResult = result
+    // Refresh the page to show results
+    updated()
 }
 
 
