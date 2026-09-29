@@ -9,9 +9,9 @@
  *  - CoCoHue - Hue Bridge Integration
  */
 
-/* Id: b5bc24a */
-/* Date: 2026-09-28 22:57:04 */
-/* Commit: 260 */
+/* Id: b9c8e88 */
+/* Date: 2026-09-28 23:24:07 */
+/* Commit: 262 */
 
 #include Salus_for_Hubitat.SalusCommon
 
@@ -416,7 +416,7 @@ void setGatewayStatus(String status) {
  */
 Map testIpConnectivity(String gatewayIP) {
     try {
-        InetAddress address = InetAddress.getByName(gatewayIP)
+        def address = InetAddress.getByName(gatewayIP)
         if (address.isReachable(3000)) {
             return [success: true, message: "Gateway reachable at ${gatewayIP} (ping successful)"]
         } else {
@@ -445,7 +445,7 @@ Map testEuidCommunication(String gatewayIP, String euidToken) {
     
     // Test TCP connection to gateway
     try {
-        Socket socket = new Socket()
+        def socket = new Socket()
         try {
             socket.connect(new InetSocketAddress(gatewayIP, 80), 5000)
             socket.close()
