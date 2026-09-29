@@ -9,9 +9,9 @@
  *  - CoCoHue - Hue Bridge Integration
  */
 
-/* Id: 021e44f */
-/* Date: 2026-09-28 19:22:24 */
-/* Commit: 248 */
+/* Id: 91ef300 */
+/* Date: 2026-09-28 20:56:05 */
+/* Commit: 256 */
 
 #include Salus_for_Hubitat.SalusCommon
 
@@ -39,7 +39,29 @@ void installed() {
 }
 
 void updated() {
-    validateSettings()
+    if (settings.resetConnection) {
+        log.info "Manual connection reset requested - resetting failed attempt counter"
+        state.failedConnectionAttempts = 0
+        setGatewayStatus("connection_reset")
+        runIn(1, "pollGatewayStatus")
+        return
+    }
+    
+    if (settings.enablePersistentDebug) {
+        log.info "Persistent debug logging enabled by user"
+        state.debugEnabled = true
+        // Cancel any pending disable task
+        unschedule("disableDebugLogging")
+    } else {
+        // Enable temporary debug and auto-disable after 30 minutes
+        state.debugEnabled = true
+        runIn(1800, "disableDebugLogging")
+    }
+    
+    if (!validateSettings()) {
+        log.error "Settings validation failed - not applying invalid settings"
+        return
+    }
     initialize()
 }
 
@@ -49,15 +71,22 @@ void deleted() {
 
 /**
  * Validate settings on update
+ * Returns true if valid, false if invalid
  */
-void validateSettings() {
+Boolean validateSettings() {
+    Boolean valid = true
+    
     if (settings.gatewayIP) {
         // Basic IP/hostname validation
         def ipPattern = /^(\d{1,3}\.){3}\d{1,3}$/
         def hostnamePattern = /^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/
         if (!settings.gatewayIP.matches(ipPattern) && !settings.gatewayIP.matches(hostnamePattern)) {
             log.warn "Gateway IP/hostname format may be invalid: ${settings.gatewayIP}"
+            valid = false
         }
+    } else {
+        log.warn "Gateway IP/hostname is required"
+        valid = false
     }
     
     if (settings.euidToken) {
@@ -65,7 +94,11 @@ void validateSettings() {
         def euidPattern = /^[0-9A-Fa-f]{16}$/
         if (!settings.euidToken.matches(euidPattern)) {
             log.warn "EUID token format may be invalid (expected 16 hex chars): ${settings.euidToken}"
+            valid = false
         }
+    } else {
+        log.warn "EUID token is required"
+        valid = false
     }
     
     if (settings.pollInterval) {
@@ -75,6 +108,8 @@ void validateSettings() {
             settings.pollInterval = POLL_INTERVAL_MINUTES
         }
     }
+    
+    return valid
 }
 
 void initialize() {
@@ -85,11 +120,37 @@ void initialize() {
     if (!state.pollInterval) state.pollInterval = POLL_INTERVAL_MINUTES
     if (!state.deviceMap) state.deviceMap = [:]
     // deviceMap structure: [deviceId: [childAppId: "...", virtualDni: "..."]]
+    // Reset failure tracking on re-initialization
+    state.failedConnectionAttempts = 0
     
     if (isConfigured()) {
         connectToGateway()
         scheduleStatusPolling()
     }
+}
+
+/**
+ * Check if debug logging is enabled (persistent or temporary)
+ */
+Boolean isDebugEnabled() {
+    return settings?.enablePersistentDebug == true || state?.debugEnabled == true
+}
+
+/**
+ * Log debug message if debug logging is enabled
+ */
+void debugLog(String message) {
+    if (isDebugEnabled()) {
+        log.debug message
+    }
+}
+
+/**
+ * Disable temporary debug logging (called after 30 minutes)
+ */
+void disableDebugLogging() {
+    state.debugEnabled = false
+    log.info "Enhanced debug logging auto-disabled after 30 minutes"
 }
 
 void cleanup() {
@@ -122,9 +183,25 @@ def pageMain() {
                   options: [1:"1 min", 2:"2 min", 5:"5 min", 10:"10 min", 15:"15 min", 30:"30 min"],
                   defaultValue: 5
         }
-        section("Status") {
+        section("Connection Status") {
             paragraph "Status: ${state.gatewayStatus ?: 'unknown'}"
             paragraph "Devices: ${state.deviceMap?.size() ?: 0}"
+            if (state.failedConnectionAttempts && state.failedConnectionAttempts > 0) {
+                paragraph "Failed connection attempts: ${state.failedConnectionAttempts}"
+            }
+            if (state.gatewayStatus == "gateway_unreachable") {
+                paragraph "Unable to reach Salus Gateway - automatic polling paused"
+                input "resetConnection", "bool", title: "Reset Connection & Resume Polling", 
+                      description: "Reset the failed attempt counter and immediately retry connecting to the Salus Gateway", 
+                      defaultValue: false
+            }
+        }
+        section("Debug Logging") {
+            paragraph "Enhanced debug logging provides detailed information about gateway communication, encryption, and device state updates."
+            paragraph "⚠️ Warning: Persistent debug logging generates significant log activity and may affect Hubitat performance."
+            input "enablePersistentDebug", "bool", title: "Enable Persistent Debug Logging", 
+                  description: "Keep debug logging enabled permanently (auto-disables after 30 minutes if not persistent)", 
+                  defaultValue: false
         }
     }
 }
@@ -158,30 +235,70 @@ def fetchGatewayData() {
 
 void handleGatewayResponse(response) {
     log.debug "Response status: ${response.status}"
-    if (response.status == 200) {
-        try {
-            // Decrypt the response data using the EUID-based key
-            String decryptedData = decryptPayload(response.data, state.euidToken)
-            
-            // Parse the decrypted JSON response
-            def parsedData = new JsonSlurper().parseText(decryptedData)
-            
-            // Convert parsed data to the format expected by processGatewayData
-            // The gateway returns data in a format like {"deviceid": [...], "climate": {...}, "switch": {...}}
-            Map<String, Object> gatewayData = [
-                climate: parsedData.climate ?: [:],
-                switch: parsedData.switch ?: [:]
-            ]
-            
-            processGatewayData(gatewayData)
-            setGatewayStatus("connected")
-        } catch (e) {
-            log.error "Error processing gateway response: ${e}"
-            setGatewayStatus("data_error")
+    
+    // Handle HTTP-level errors
+    if (response.status < 0) {
+        log.error "Network error: ${response.errorMessage ?: 'Unknown network error'}"
+        setGatewayStatus("network_error")
+        scheduleRetryPoll()
+        return
+    }
+    
+    if (response.status != 200) {
+        log.warn "Unexpected HTTP status: ${response.status}"
+        setGatewayStatus("http_error_${response.status}")
+        scheduleRetryPoll()
+        return
+    }
+    
+    // Process successful response
+    try {
+        // Decrypt the response data using the EUID-based key
+        String decryptedData = decryptPayload(response.data, state.euidToken)
+        
+        // Parse the decrypted JSON response
+        def parsedData = new JsonSlurper().parseText(decryptedData)
+        
+        // Validate response structure
+        if (!parsedData || !(parsedData instanceof Map)) {
+            throw new Exception("Invalid response structure: not a JSON object")
         }
+        
+        // Convert parsed data to the format expected by processGatewayData
+        Map<String, Object> gatewayData = [
+            climate: parsedData.climate ?: [:],
+            switch: parsedData.switch ?: [:]
+        ]
+        
+        processGatewayData(gatewayData)
+        setGatewayStatus("connected")
+        // Reset consecutive failure count on success
+        state.consecutiveFailures = 0
+        
+    } catch (Exception e) {
+        log.error "Error processing gateway response: ${e.message}"
+        log.debug "Response data (first 200 chars): ${response.data?.encodeBase64()?[0..200]}"
+        setGatewayStatus("data_error")
+        scheduleRetryPoll()
+    }
+}
+
+/**
+ * Schedule a retry poll with exponential backoff
+ */
+void scheduleRetryPoll() {
+    state.failedConnectionAttempts = (state.failedConnectionAttempts ?: 0) + 1
+    int maxFailures = 5
+    
+    if (state.failedConnectionAttempts <= maxFailures) {
+        // Exponential backoff: 30s, 60s, 120s, 240s, 480s
+        int delaySeconds = 30 * (2 ** (state.failedConnectionAttempts - 1))
+        delaySeconds = Math.min(delaySeconds, 480) // Cap at 8 minutes
+        log.info "Scheduling retry connection to Salus Gateway in ${delaySeconds}s (attempt ${state.failedConnectionAttempts}/${maxFailures})"
+        runIn(delaySeconds, "pollGatewayStatus")
     } else {
-        log.warn "Unexpected response status: ${response.status}"
-        setGatewayStatus("error")
+        log.error "Max consecutive failed connection attempts (${maxFailures}) reached - pausing automatic polling until manual recovery"
+        setGatewayStatus("gateway_unreachable")
     }
 }
 
@@ -499,7 +616,22 @@ Boolean executeGatewayCommandWithRetry(String deviceId, String command, Object p
 }
 
 def commandResponseHandler(response) {
-    setGatewayStatus(response.status == 200 ? "connected" : "command_error")
+    log.debug "Command response status: ${response.status}"
+    
+    if (response.status < 0) {
+        log.error "Command network error: ${response.errorMessage ?: 'Unknown network error'}"
+        setGatewayStatus("command_network_error")
+        return
+    }
+    
+    if (response.status != 200) {
+        log.warn "Command HTTP error: ${response.status}"
+        setGatewayStatus("command_http_error_${response.status}")
+        return
+    }
+    
+    // Command sent successfully - status will be updated when next poll completes
+    setGatewayStatus("command_sent")
 }
 
 void retryConnection() {

@@ -32,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Created `packageManifest.json`** for Hubitat Package Manager (HPM) compatibility
 - **Child apps now use library constants** - Using `SalusCommon.THERMOSTAT_PRESETS`, `THERMOSTAT_MODES`, `THERMOSTAT_FAN_MODES`
 - **Explicit deviceNetworkId in child device creation** - Using `salus_thermostat_${deviceId}` and `salus_switch_${deviceId}`
-- **Added input validation on parent app settings** - Validates IP/hostname format, EUID format, and poll interval bounds
+- **Added input validation on parent app settings** - Validates IP/hostname format, EUID format, and poll interval bounds; blocks invalid settings from being applied
 - **Added event-based parent-child communication** - Parent sends `gatewayUpdate` events; children subscribe and handle via `handleGatewayUpdate()`
 - **Added comprehensive build/test documentation to drivers** - Both drivers now include communication flow diagrams and test steps
 - **Added logging in handleGatewayResponse** to verify gateway response ID format
@@ -43,12 +43,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed BigDecimal issue in driver initialization** - Changed decimal literals to double (`22.0d`, `20.0d`) to avoid type mismatch with `setAttribute()`
 - **Fixed `setAttribute()` typo** - Corrected `attribute()` to `setAttribute()` for gatewayStatus
 - **Fixed primitive double conversion for `setAttribute()`** - Hubitat's `setAttribute()` requires primitive `double`, not `java.lang.Double`; added `toPrimitiveDouble()` helper method using `.doubleValue()` for all numeric `setAttribute()` calls in SalusThermostat driver
+- **Enhanced error handling for async HTTP callbacks** - Added network timeout handling, malformed response detection, decryption failure handling, HTTP status code validation
+- **Improved input validation on parent app settings** - Now blocks invalid settings from being applied (returns false from validateSettings, prevents initialize)
+- **Software retry connection logic with exponential backoff** - Tracks failed connection attempts to Salus Gateway, exponential backoff (30s, 60s, 120s, 240s, 480s), pauses after 5 failures, manual reset option
+- **Renamed internal "circuit breaker" terminology** to user-friendly terms: "retry connection to Salus Gateway", "failed connection to gateway", "polling gateway", "connection reset"
 
 ### Added
 - Event-based parent-child communication architecture
-- Input validation for gateway configuration settings
+- Input validation for gateway configuration settings (blocks invalid settings)
 - Hubitat Package Manager (HPM) compatibility via `packageManifest.json`
 - Comprehensive build/test documentation in drivers
+- **Enhanced debug logging for gateway communication** - Debug logging for connection, polling, commands, encryption/decryption, device state updates
+- **Auto-disabling debug logging** - Debug logging auto-disables after 30 minutes unless user enables persistent mode
+- **Persistent debug logging option** - User can enable persistent debug logging with warning about log volume and Hubitat performance impact
+- **Debug logging UI in parent app** - Section with persistent debug toggle, auto-disable warning, temporary debug enable
+- **Debug logging UI in child apps** - Both SalusThermostatController and SalusSwitchController have debug logging section
+- **Debug logging helper methods** - `isDebugEnabled()`, `debugLog()`, `disableDebugLogging()` in child apps
+- **Temporary debug logging** - Debug auto-enabled on settings update, auto-disabled after 30 minutes (1800 seconds) unless persistent mode enabled
+- **Connection retry logic with exponential backoff** - Tracks failed connection attempts to Salus Gateway, exponential backoff (30s, 60s, 120s, 240s, 480s), pauses after 5 failures with "gateway_unreachable" status
+- **Manual connection reset** - UI button to reset failed attempt counter and immediately retry connecting to Salus Gateway
+- **Enhanced gateway status tracking** - New statuses: "connection_reset", "gateway_unreachable", "command_network_error", "command_http_error"
+- **Debug logging for gateway operations** - Connection, polling, commands sent, encryption/decryption, device state updates
+- **User-friendly status messages** - "Failed connection attempts", "Retry connection to Salus Gateway", "Polling gateway", "Reset Connection & Resume Polling"
 
 ## [0.1.0] - 2026-09-18
 

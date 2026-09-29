@@ -7,9 +7,9 @@
  *  This child app is created and managed by the SalusGatewayConnector parent app.
  */
 
-/* Id: 62462c9 */
-/* Date: 2026-09-28 19:34:12 */
-/* Commit: 249 */
+/* Id: 91ef300 */
+/* Date: 2026-09-28 20:56:05 */
+/* Commit: 256 */
 
 #include Salus_for_Hubitat.SalusCommon
 
@@ -33,6 +33,14 @@ void installed() {
 }
 
 void updated() {
+    if (settings.enablePersistentDebug) {
+        log.info "Persistent debug logging enabled by user"
+        state.debugEnabled = true
+        unschedule("disableDebugLogging")
+    } else {
+        state.debugEnabled = true
+        runIn(1800, "disableDebugLogging")
+    }
     log.debug "Updated Salus Thermostat Controller"
     initialize()
 }
@@ -43,10 +51,34 @@ void deleted() {
 }
 
 /**
+ * Check if debug logging is enabled (persistent or temporary)
+ */
+Boolean isDebugEnabled() {
+    return settings?.enablePersistentDebug == true || state?.debugEnabled == true
+}
+
+/**
+ * Log debug message if debug logging is enabled
+ */
+void debugLog(String message) {
+    if (isDebugEnabled()) {
+        log.debug message
+    }
+}
+
+/**
+ * Disable temporary debug logging (called after 30 minutes)
+ */
+void disableDebugLogging() {
+    state.debugEnabled = false
+    log.info "Enhanced debug logging auto-disabled after 30 minutes"
+}
+
+/**
  * Initialize the child application
  */
 void initialize() {
-    log.debug "Initializing Salus Thermostat Controller"
+    debugLog "Initializing Salus Thermostat Controller"
     
     // Get configuration from settings (set by parent app)
     def deviceId = getDeviceId()
@@ -54,7 +86,7 @@ void initialize() {
     def deviceModel = getDeviceModel()
     def parentAppId = getParentAppId()
     
-    log.debug "Initializing thermostat controller for device ${deviceId} (${deviceName})"
+    debugLog "Initializing thermostat controller for device ${deviceId} (${deviceName})"
     
     // Create the virtual thermostat device if it doesn't exist
     createOrUpdateThermostatDevice()
@@ -86,6 +118,13 @@ def pageMain() {
         section("Status") {
             paragraph "Gateway Status: ${state.gatewayStatus ?: 'unknown'}"
             paragraph "Last Update: ${state.lastUpdate ?: 'never'}"
+        }
+        section("Debug Logging") {
+            paragraph "Enhanced debug logging provides detailed information about gateway communication, commands, and device state updates."
+            paragraph "⚠️ Warning: Persistent debug logging generates significant log activity and may affect Hubitat performance."
+            input "enablePersistentDebug", "bool", title: "Enable Persistent Debug Logging", 
+                  description: "Keep debug logging enabled permanently (auto-disables after 30 minutes if not persistent)", 
+                  defaultValue: false
         }
     }
 }
@@ -130,7 +169,7 @@ def getParentApp() {
  * Create or update the virtual thermostat device
  */
 void createOrUpdateThermostatDevice() {
-    log.debug "Creating/updating virtual thermostat device"
+    debugLog "Creating/updating virtual thermostat device"
     
     // Check if we already have a virtual thermostat device
     String deviceLabel = "${getDeviceName() ?: 'Salus'} Thermostat"
@@ -138,7 +177,7 @@ void createOrUpdateThermostatDevice() {
     def existingDevice = getChildDevice(expectedDni)
     
     if (existingDevice) {
-        log.debug "Virtual thermostat device already exists: ${existingDevice.displayName}"
+        debugLog "Virtual thermostat device already exists: ${existingDevice.displayName}"
         // Update device properties if needed
         updateVirtualThermostatDevice(existingDevice)
         // Ensure we track the DNI
@@ -147,7 +186,7 @@ void createOrUpdateThermostatDevice() {
             notifyParentOfVirtualDni()
         }
     } else {
-        log.debug "Creating new virtual thermostat device"
+        debugLog "Creating new virtual thermostat device"
         createVirtualThermostatDevice(deviceLabel, expectedDni)
     }
 }
@@ -156,7 +195,7 @@ void createOrUpdateThermostatDevice() {
  * Create a new virtual thermostat device
  */
 void createVirtualThermostatDevice(String label, String dni) {
-    log.debug "Creating virtual thermostat device: ${label} with DNI: ${dni}"
+    debugLog "Creating virtual thermostat device: ${label} with DNI: ${dni}"
     
     try {
         // Create a child device using a thermostat driver
@@ -178,7 +217,7 @@ void createVirtualThermostatDevice(String label, String dni) {
         )
         
         if (deviceId) {
-            log.debug "Successfully created virtual thermostat device: ${deviceId}"
+            debugLog "Successfully created virtual thermostat device: ${deviceId}"
             
             // Store the DNI for future lookups
             state.virtualDeviceDni = dni
