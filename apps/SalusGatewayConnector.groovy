@@ -9,9 +9,9 @@
  *  - CoCoHue - Hue Bridge Integration
  */
 
-/* Id: 91ef300 */
-/* Date: 2026-09-28 20:56:05 */
-/* Commit: 256 */
+/* Id: c032884 */
+/* Date: 2026-09-28 21:16:07 */
+/* Commit: 257 */
 
 #include Salus_for_Hubitat.SalusCommon
 
@@ -277,7 +277,7 @@ void handleGatewayResponse(response) {
         
     } catch (Exception e) {
         log.error "Error processing gateway response: ${e.message}"
-        log.debug "Response data (first 200 chars): ${response.data?.encodeBase64()?[0..200]}"
+        log.debug "Response data (first 200 chars): ${response.data?.encodeBase64()?.[0..200] ?: 'empty'}"
         setGatewayStatus("data_error")
         scheduleRetryPoll()
     }
