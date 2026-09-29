@@ -238,9 +238,9 @@ def refresh() {
 void setThermostatAttributes() {
     log.debug "Setting thermostat attributes"
     
-    setAttribute("temperature", state.temperature)
-    setAttribute("heatingSetpoint", state.heatingSetpoint)
-    setAttribute("coolingSetpoint", state.coolingSetpoint ?: 0)  // Default if not set
+    setAttribute("temperature", state.temperature as double)
+    setAttribute("heatingSetpoint", state.heatingSetpoint as double)
+    setAttribute("coolingSetpoint", (state.coolingSetpoint ?: 0) as double)  // Default if not set
     setAttribute("thermostatMode", state.thermostatMode)
     setAttribute("thermostatFanMode", state.thermostatFanMode)
     setAttribute("presetMode", state.presetMode)
@@ -250,7 +250,7 @@ void setThermostatAttributes() {
     setAttribute("availableThermostatPresets", THERMOSTAT_PRESETS)
     setAttribute("gatewayStatus", state.gatewayStatus ?: "unknown")
     setAttribute("thermostatOperatingState", state.thermostatOperatingState ?: "idle")
-    setAttribute("thermostatSetpoint", state.heatingSetpoint)  // Alias for compatibility
+    setAttribute("thermostatSetpoint", state.heatingSetpoint as double)  // Alias for compatibility
     
     // Create events for changed attributes
     createEvent(name: "temperature", value: state.temperature, 
