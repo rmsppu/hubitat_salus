@@ -7,9 +7,9 @@
  *  This child app is created and managed by the SalusGatewayConnector parent app.
  */
 
-/* Id: 91ef300 */
-/* Date: 2026-09-28 20:56:05 */
-/* Commit: 256 */
+/* Id: 5fb31d0 */
+/* Date: 2026-09-28 23:21:29 */
+/* Commit: 261 */
 
 #include Salus_for_Hubitat.SalusCommon
 
@@ -33,14 +33,24 @@ void installed() {
 }
 
 void updated() {
-    if (settings.enablePersistentDebug) {
-        log.info "Persistent debug logging enabled by user"
-        state.debugEnabled = true
-        unschedule("disableDebugLogging")
+    // Handle debug logging settings
+    if (settings.enableDebug) {
+        if (settings.enablePersistentDebug) {
+            log.info "Persistent debug logging enabled by user"
+            state.debugEnabled = true
+            unschedule("disableDebugLogging")
+        } else {
+            // Enable temporary debug and auto-disable after 30 minutes
+            state.debugEnabled = true
+            unschedule("disableDebugLogging")
+            runIn(1800, "disableDebugLogging")
+        }
     } else {
-        state.debugEnabled = true
-        runIn(1800, "disableDebugLogging")
+        // Debug logging disabled
+        state.debugEnabled = false
+        unschedule("disableDebugLogging")
     }
+    
     log.debug "Updated Salus Thermostat Controller"
     initialize()
 }
@@ -120,11 +130,15 @@ def pageMain() {
             paragraph "Last Update: ${state.lastUpdate ?: 'never'}"
         }
         section("Debug Logging") {
-            paragraph "Enhanced debug logging provides detailed information about gateway communication, commands, and device state updates."
-            paragraph "⚠️ Warning: Persistent debug logging generates significant log activity and may affect Hubitat performance."
-            input "enablePersistentDebug", "bool", title: "Enable Persistent Debug Logging", 
-                  description: "Keep debug logging enabled permanently (auto-disables after 30 minutes if not persistent)", 
+            input "enableDebug", "bool", title: "Enable Debug Logging", 
+                  description: "Enable enhanced debug logging for gateway communication, commands, and device state updates (auto-disables after 30 minutes)", 
                   defaultValue: false
+            if (settings?.enableDebug) {
+                paragraph "⚠️ Warning: Persistent debug logging generates significant log activity and may affect Hubitat performance."
+                input "enablePersistentDebug", "bool", title: "Enable Persistent Debug Logging", 
+                      description: "Keep debug logging enabled permanently (does not auto-disable after 30 minutes)", 
+                      defaultValue: false
+            }
         }
     }
 }

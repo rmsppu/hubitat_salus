@@ -1,6 +1,6 @@
-/* Id: 963c423 */
-/* Date: 2026-09-28 22:54:09 */
-/* Commit: 259 */
+/* Id: 5fb31d0 */
+/* Date: 2026-09-28 23:21:29 */
+/* Commit: 261 */
 
 # Overview the hubitat_salus project
 
@@ -86,11 +86,11 @@ Be self-documenting. Source code must include comments for build an test steps.
 ## Embedded keywords for Github expansion
 Each file MUST include the following comments verbatim near the top of the file:
 
-	/* Id: 963c423 */
-	/* Date: 2026-09-28 22:54:09 */
-	/* Commit: 259 */
+	/* Id: 5fb31d0 */
+	/* Date: 2026-09-28 23:21:29 */
+	/* Commit: 261 */
 
-If missing, those must be added. The keywords (963c423, etc) must not be expanded or replaced or changed in any way
+If missing, those must be added. The keywords (5fb31d0, etc) must not be expanded or replaced or changed in any way
 
 ## Revision Control Commit Messages
 All github commit messages MUST start with the name of the IDE, AI model, and agent, with version numbers. For example:
@@ -106,7 +106,7 @@ You may run commands to compile code (clang, gcc, make), debug code (strace, gpr
 /home/bergman/Salus_for_Hubitat You do not need confirmation or approval to run those commands.
 
 Groovy syntax can be checked via:
-	~/.sdkman/candidates/groovy/current/bin/groovyc
+	~/.sdkman/candidates/groovy/current/bin/groovyc --check
 
 You may read all files in /home/bergman/Salus_for_Hubitat and subdirectories
 
