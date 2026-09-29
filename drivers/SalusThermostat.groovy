@@ -99,8 +99,8 @@ def initialize() {
     // Initialize state if needed
     if (!state.initialized) {
         state.initialized = true
-        state.heatingSetpoint = 22.0
-        state.temperature = 20.0
+        state.heatingSetpoint = 22.0d
+        state.temperature = 20.0d
         state.thermostatMode = "heat"
         state.thermostatFanMode = "auto"
         state.presetMode = "follow_schedule"
@@ -248,7 +248,7 @@ void setThermostatAttributes() {
     setAttribute("supportedThermostatModes", THERMOSTAT_MODES)
     setAttribute("supportedThermostatFanModes", THERMOSTAT_FAN_MODES)
     setAttribute("availableThermostatPresets", THERMOSTAT_PRESETS)
-    attribute("gatewayStatus", state.gatewayStatus ?: "unknown")
+    setAttribute("gatewayStatus", state.gatewayStatus ?: "unknown")
     setAttribute("thermostatOperatingState", state.thermostatOperatingState ?: "idle")
     setAttribute("thermostatSetpoint", state.heatingSetpoint)  // Alias for compatibility
     
